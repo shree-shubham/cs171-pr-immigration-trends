@@ -1,3 +1,4 @@
-# Immigrant Populations
-## CS 171 Final Project
-### Kristina Hu and Sierra Katow
+Immigrant Populations
+=======
+CS 171 Final Project of Kristina Hu and Sierra Katow
+-----------
