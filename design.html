@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+	<link rel="stylesheet" type="text/css" href="/css/design.css">
+</head>
+<body>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
+	<script src="/js/datamaps.world.min.js"></script>
+	<h1>Global Export Visualization</h1>
+	<form>
+		<label>Year: <select name="year">
+			<option value="1995">1995</option>
+			<option value="1996">1996</option>
+			<option value="1997">1997</option>
+			<option value="1998">1998</option>
+			<option value="1999">1999</option>
+			<option value="2000">2000</option>
+			<option value="2001">2001</option>
+			<option value="2002">2002</option>
+			<option value="2003">2003</option>
+			<option value="2004">2004</option>
+			<option value="2005">2005</option>
+			<option value="2006">2006</option>
+			<option value="2007">2007</option>
+			<option value="2008">2008</option>
+			<option value="2009">2009</option>
+			<option value="2010">2010</option>
+			<option value="2011">2011</option>
+			<option value="2012">2012</option>
+		</select>
+		</label>
+	</form>
+	<br>
+	<div class="info">
+		Hover over a country to see its top partners.
+	</div>
+	<div id="container" style="width: 900px; height: 700px;"></div>
+	<script>
+		var g_data, partners = {}, year = 2000;
+		var code_lookup = {}, arcs = [];
+
+		var map = new Datamap({
+	    	scope: 'world',
+	    	projection: 'mercator',
+	    	element: document.getElementById('container'),
+	    	fills: {
+	    		defaultFill: 'rgba(0,0,0,0.5)'
+	    	}
+	   	});
+
+		function newyear(){
+			partners = {};
+			g_data.forEach(function(i){
+				partners[i.country_id] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
+			});
+			rendermap();
+		}
+
+		d3.json("data/countries_1995_2012.json", function(error, data){
+			g_data = data;
+
+			rendermap();
+		    
+		});
+
+		function id_lookup(name){
+			var x = g_data.filter(function(m){
+				return m.name == name;
+			})
+
+			if(x.length == 0) return -1;
+			else return x[0].country_id;
+		};
+
+		function rendermap(){
+		   	var countries = Datamap.prototype.worldTopo.objects.world.geometries;
+			for (var i = 0, j = countries.length; i < j; i++) {
+				code_lookup[countries[i].id] = countries[i].properties.name;
+			}
+
+			//make some changes to be compatible with our data set
+			code_lookup['USA'] = "United States";
+			code_lookup['TZA'] = "Tanzania";
+
+			g_data.forEach(function(i){
+				partners[i.country_id] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
+			});
+
+		   	
+		    listener();
+		}
+
+		function listener(){
+			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){
+
+		    	var ctry = d3.select(this);
+		    	var code = ctry.attr("class").split(' ')[1];
+		    	ctry.style("fill", "#404040");
+
+		    	var arcs = [];
+
+		    	var orig = g_data.filter(function(n){
+					return n.name == code_lookup[code];
+				})[0];
+
+		    	var cid = id_lookup(code_lookup[code]);
+		    	if(cid > 0){
+		    		var div = d3.select(".info")
+
+		    		div.text(null)
+						.append("h3")
+						.text(orig.name+" - "+year)
+
+			    	var tr = div
+			    		.append("table").selectAll("tr")
+			    		.data(partners[cid])
+			    		.enter()
+			    		.append("tr");
+		    			
+		    		tr.append("td")
+		    			.text(function(c){
+		    				var d = g_data.filter(function(n){ return n.country_id == c });
+		    				if(d.length > 0)
+		    					return d[0].name;
+		    				else
+		    					return '';
+		    			});
+		    		tr.append("td")
+		    			.style("color", function(c, n){
+		    				var opac = 1.0 - n/10;
+		    				return "rgba(188,52,68,"+opac+")";
+		    			})
+		    			.text(function(c, n){ return d3.format(",")(orig.years[year-1995].top_partners[n].total_export); });
+
+					partners[cid].forEach(function(t, prank){
+						var dest = g_data.filter(function(n){
+							return n.country_id == parseInt(t);
+						});
+
+						if(dest.length > 0){
+							dest = dest[0];
+
+							var dcode;
+
+							for(c in code_lookup){
+								if(code_lookup[c] == dest.name){
+									dcode = c;
+								}
+							}
+
+							d3.selectAll(".datamaps-subunit").each(function(s){
+								var code = d3.select(this).attr("class").split(' ')[1];
+								if(code == dcode){
+									var opac = 1.0 - prank/10;
+									d3.select(this).style("fill", "rgba(188,52,68,"+opac+")");
+								}
+							});
+
+							if(typeof(orig) !== "undefined" && typeof(dest) !== "undefined"){
+								arcs.push({
+									origin: {
+										latitude: orig.latitude,
+										longitude: orig.longitude
+									},
+									destination: {
+										latitude: dest.latitude,
+										longitude: dest.longitude
+									}
+								})
+							}
+						}
+					})
+				}
+					
+		    	map.arc(arcs, {
+					strokeColor: '#000000',
+					strokeWidth: 1,
+					arcSharpness: 1,
+				});
+		    }).on("mouseout", function(c){
+		    	d3.select(".info").html("Hover over a country to see its top partners.");
+
+		    	d3.selectAll(".datamaps-subunit")
+		    		.style("fill", "rgba(0,0,0,0.5)");
+		    	map.arc([], {
+					strokeColor: '#000000',
+					strokeWidth: 1,
+					arcSharpness: 1,
+				});
+		    });
+
+			d3.selectAll("select")
+				.each(function(d){
+					if(d3.select(this).attr("name") == 'year'){
+						d3.select(this).on("change", function(){
+							year = d3.select(this).property("value");
+							newyear();
+						});
+					}
+				});
+		}
+
+	</script>
+</body>
+</html>
