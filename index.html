@@ -9,11 +9,13 @@
     <script src="http://d3js.org/queue.v1.min.js"></script>
     <script src="libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
     <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
+    <script src="libs/datamaps/datamaps.world.min.js"></script>
 
     <!--Stylesheets-->
     <link rel="stylesheet" type="text/css" href="libs/bootstrap/css/bootstrap.min.css">
 
-    <!-- Get some nice font-->
+    <!-- Get some nice font`-->
     <link href='http://fonts.googleapis.com/css?family=PT+Sans:400,700' rel='stylesheet' type='text/css'>
 
     <!-- add own vis classes-->
@@ -23,25 +25,33 @@
 
 </head>
 <body>
-    <script>
-    var margin = {top: 50, bottom: 50, left: 50, right: 50};
-    var width = 1500 - margin.left - margin.right;
-    var height = 1500 - margin.top - margin.bottom;
 
-    d3.csv("data/data.csv", function(d)
+    <div id="container" style="position: relative; width: 1800px; height: 800px;"></div>
+
+    <script>
+    var map = new Datamap({
+        element: document.getElementById('container'),
+        fills: {
+            defaultFill: 'rgba(0,0,0,0.25)'
+        }
+    });
+    var data;
+
+    d3.csv("data/data_codes.csv", function(d)
     {
         return {
-            origin: d["Origin"],
-            gender: d["Gender"],
-            destination: d["Destination"],
-            sixty: d["year1960"],
-            seventy: d["year1970"],
-            eighty: d["year1980"],
-            ninety: d["year1990"],
-            twothousand: d["year2000"]
+            orig: d["Origin"],
+            sex: d["Gender"],
+            dest: d["Destination"],
+            1960: d["1960"],
+            1970: d["1970"],
+            1980: d["1980"],
+            1990: d["1990"],
+            2000: d["2000"]
         };
     }, function(error, rows) {
-        console.log(rows);
+        data = rows;
+        console.log(data);
     });
 
   </script> 
