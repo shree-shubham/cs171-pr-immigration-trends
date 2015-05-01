@@ -8,14 +8,35 @@
 	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
 	<script src="/libs/datamaps/datamaps.world.min.js"></script>
 	<script src="http://d3js.org/queue.v1.min.js"></script>
-	<h1>Immigration Trends Visualization</h1>
+	<span class="hdrs">
+		<h1>Immigration Trends</h1>
+		<h2>Sierra Katow & Kristina Hu</h2>
+	</span>
 	<br>
-	<div id="container" style="position: relative; width: 1800px; height: 800px;"></div>
+	<div id="container"></div>
 	<script>
 		var g_data, year = 1970;
 		var code_lookup = {}, arcs = [];
 		var map;
 		
+
+		var w = window,
+			d = document,
+			e = d.documentElement,
+			g = d.getElementsByTagName('body')[0],
+			x = w.innerWidth || e.clientWidth || g.clientWidth,
+			y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+		function updateWindow(){
+			x = w.innerWidth || e.clientWidth || g.clientWidth;
+			y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+			d3.select('#container').style({ "width": x.toString()+"px", "height": y.toString()+"px"});
+			// d3.select('#container').select('svg').attr("width", x).attr("height", y);
+		}
+
+		window.onresize = updateWindow;
+		updateWindow();
 
 		function newyear(){
 			g_data.forEach(function(i){
@@ -80,15 +101,7 @@
 				}
 			})
 
-			map = new Datamap({
-		    	scope: 'world',
-		    	projection: 'mercator',
-		    	element: document.getElementById('container'),
-		    	fills: {
-		    		defaultFill: 'rgba(0,0,0,0.2)'
-		    	}
-		   	});
-
+		   	drawMap();
 		   	rendermap();
 	    }
 
@@ -110,7 +123,19 @@
 			else return x[0].country_id;
 		};
 
+		function drawMap(){
+			map = new Datamap({
+		    	scope: 'world',
+		    	projection: 'mercator',
+		    	element: document.getElementById('container'),
+		    	fills: {
+		    		defaultFill: 'rgba(0,0,0,0.2)'
+		    	}
+		   	});
+		}
+
 		function rendermap(){
+
 		   	var countries = Datamap.prototype.worldTopo.objects.world.geometries;
 			for (var i = 0, j = countries.length; i < j; i++) {
 				code_lookup[countries[i].id] = countries[i].properties.name;
@@ -119,10 +144,6 @@
 			//make some changes to be compatible with our data set
 			code_lookup['USA'] = "United States";
 			code_lookup['TZA'] = "Tanzania";
-
-			// g_data.forEach(function(i){
-			// 	partners[i.country] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
-			// });
 
 		   	
 		    listener();

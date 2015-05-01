@@ -1,15 +1,26 @@
-body{
+html, body{
     font-family: 'PT Sans', sans-serif;
+    margin:0px;
+    padding:0px;
+    height:100%;
+    width:100%;
 }
+
 #container{
 	position: relative; 
-	width: 1800px; 
-	height: 800px;
 }
+
 #legend{
 	background-color: rgb(200,200,200);
 	font-size: 75%;
 	width: 400px;
 	height:300px;
 	position: absolute;
+}
+
+.hdrs {
+    position: absolute;
+    top:20px;
+    left:20px;
+    z-index:1000;
 }
