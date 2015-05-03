@@ -13,12 +13,22 @@
 		<h2>Sierra Katow & Kristina Hu</h2>
 	</span>
 	<br>
+	<div id="legend">	
+	    <b>Year:</b> 1960
+	        <input class = "slider" type="range" name="points" min="1960" max="2000" step="10" value="1960" id="slider-time" oninput=";"> 2000
+	    <br><br>
+			<label><input class="direction" type="radio" value="outgoing" checked>Outgoing (Emigrants)</label>
+		    <label><input class="direction" type="radio" value="incoming"> Incoming (Immigrants)</label>
+	 	<br><br>
+	  		<label><input class="both_button" type="radio" value="both" checked>Both Sexes</label>
+		    <label><input class="female_button" type="radio" value="female">Females Only</label>
+		    <label><input class="male_button" type="radio" value="male" >Males Only</label>
+	</div>
 	<div id="container"></div>
 	<script>
 		var g_data, year = 1970;
 		var code_lookup = {}, arcs = [];
 		var map;
-		
 
 		var w = window,
 			d = document,
@@ -68,8 +78,7 @@
 								newDest[obj.Gender] = parseInt(obj[yearObj.year]);
 								yearObj.dests.push(newDest);
 
-							} 
-
+							}
 						})
 
 					}else{
@@ -129,7 +138,10 @@
 		    	projection: 'mercator',
 		    	element: document.getElementById('container'),
 		    	fills: {
-		    		defaultFill: 'rgba(0,0,0,0.2)'
+		    		defaultFill: 'rgba(255,255,255,0.4)'
+		    	},
+		    	geographyConfig:{
+		    		borderColor: '#000000',
 		    	}
 		   	});
 		}
@@ -149,12 +161,13 @@
 		    listener();
 		}
 
+
 		function listener(){
 			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){
 
 		    	var ctry = d3.select(this);
 		    	var code = ctry.attr("class").split(' ')[1];
-		    	ctry.style("fill", "rgba(0, 0, 0, 0.5)");
+		    	ctry.style("fill", "#FF358B");
 		    
 		    	var arcs = [];
 
@@ -187,8 +200,8 @@
 						d3.selectAll(".datamaps-subunit").each(function(s){
 							var code = d3.select(this).attr("class").split(' ')[1];
 							if(code == dest.country){
-								var opac = 1.0 - prank/10;
-								d3.select(this).style("fill", "rgba(188,52,68,"+opac+")");
+								var opac = 1.0 - prank/3;
+								d3.select(this).style("fill", "rgba(1,176,240,"+opac+")");
 							}
 						});
 
@@ -209,15 +222,15 @@
 			}
 					
 		    	map.arc(arcs, {
-					strokeColor: '#000000',
+					strokeColor: '#AEEE00',
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
 		    }).on("mouseout", function(c){
 		    	d3.selectAll(".datamaps-subunit")
-		    		.style("fill", "rgba(0,0,0,0.2)");
+		    		.style("fill", "rgba(255,255,255,0.5)");
 		    	map.arc([], {
-					strokeColor: '#000000',
+					strokeColor: '#AEEE00',
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
