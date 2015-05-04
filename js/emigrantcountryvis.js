@@ -11,7 +11,7 @@
  * @param _eventHandler -- the Eventhandling Object to emit data to (see Task 4)
  * @constructor
  */
-CountryVis = function(_parentElement, _data, _eventHandler){
+EmigrantCountryVis = function(_parentElement, _data, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
     this.countryname = "";
@@ -19,9 +19,9 @@ CountryVis = function(_parentElement, _data, _eventHandler){
     this.displayData = [];
 
     // defines constants
-    this.margin = {top: 25, right: 25, bottom: 25, left: 40},
-    this.width = 900 - this.margin.left - this.margin.right,
-    this.height = 500 - this.margin.top - this.margin.bottom;
+    this.margin = {top: 25, right: 25, bottom: 50, left: 40},
+    this.width = 450 - this.margin.left - this.margin.right,
+    this.height = 250 - this.margin.top - this.margin.bottom;
 
     this.initVis();
 }
@@ -29,7 +29,7 @@ CountryVis = function(_parentElement, _data, _eventHandler){
 /**
  * Method that sets up the SVG and the variables
  */
-CountryVis.prototype.initVis = function(){
+EmigrantCountryVis.prototype.initVis = function(){
 
     var that = this;
 
@@ -41,14 +41,14 @@ CountryVis.prototype.initVis = function(){
         .rangeRoundBands([0, this.width], .1);
 
     var x1 = d3.scale.ordinal()
-        .domain(gender_names).rangeRoundBands([0, x0.rangeBand()]);
+        .domain(gender_names)
+        .rangeRoundBands([0, x0.rangeBand()]);
 
     var y = d3.scale.linear()
         .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .range([this.height, 0]);
 
-    var color = d3.scale.ordinal()
-        .range(["#98abc5", "#8a89a6", "#7b6888"]);
+    var color = d3.scale.category10();
 
     this.xAxis = d3.svg.axis()
         .scale(x0)
@@ -57,6 +57,7 @@ CountryVis.prototype.initVis = function(){
     this.yAxis = d3.svg.axis()
         .scale(y)
         .orient("left")
+        .ticks(6)
         .tickFormat(d3.format(".2s"));
 
     // construct SVG layout
@@ -79,8 +80,8 @@ CountryVis.prototype.initVis = function(){
       .attr("y", 6)
       .attr("dy", ".71em")
       .style("text-anchor", "end")
-      .text("Number of emigrants");
-
+      .style("fill", "white")
+      .text("EMIGRANTS");
 }
 
 /**
@@ -88,7 +89,7 @@ CountryVis.prototype.initVis = function(){
  * @param _filterFunction - a function that filters data or "null" if none
  */
  
-CountryVis.prototype.wrangleData= function(_filterFunction){
+EmigrantCountryVis.prototype.wrangleData= function(_filterFunction){
 
     // displayData should hold the data whiche is visualized
     this.displayData = this.filterAndAggregate(_filterFunction);
@@ -102,7 +103,7 @@ CountryVis.prototype.wrangleData= function(_filterFunction){
 /**
  * the drawing function - should use the D3 selection, enter, exit
  */
-CountryVis.prototype.updateVis = function(){
+EmigrantCountryVis.prototype.updateVis = function(){
 
     var that = this;
 
@@ -114,22 +115,23 @@ CountryVis.prototype.updateVis = function(){
         .rangeRoundBands([0, this.width], .1);
 
     var x1 = d3.scale.ordinal()
-        .domain(gender_names).rangeRoundBands([0, x0.rangeBand()]);
+        .domain(gender_names)
+        .rangeRoundBands([0, x0.rangeBand()]);
 
     var y = d3.scale.linear()
         .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .range([this.height, 0]);
 
-    var color = d3.scale.ordinal()
-        .range(["#98abc5", "#8a89a6", "#7b6888"]);
+    var color = d3.scale.category10();
 
-    var xAxis = d3.svg.axis()
+    this.xAxis = d3.svg.axis()
         .scale(x0)
         .orient("bottom");
 
-    var yAxis = d3.svg.axis()
+    this.yAxis = d3.svg.axis()
         .scale(y)
         .orient("left")
+        .ticks(6)
         .tickFormat(d3.format(".2s"));
 
     // update axis
@@ -143,14 +145,16 @@ CountryVis.prototype.updateVis = function(){
     this.svg.selectAll("rect").remove();
 
     // update bar chart title
-    this.svg.selectAll("text").remove();
+    this.svg.select(".title").remove();
     this.svg.append("text")
+        .attr("class", "title")
         .attr("x", (this.width / 2))
-        .attr("y", 20 - (this.margin.top / 2))
+        .attr("y", 15 - (this.margin.top / 2))
         .attr("text-anchor", "middle")
         .style("font-size", "16px")
-        .style("text-decoration", "underline")
-        .text(this.countryname);
+        .style("font-weight", "bold")
+        .style("fill", "white")
+        .text(this.countryname + " - Emigrants");
 
     // add rectangles
     var year = this.svg.selectAll(".year")
@@ -173,20 +177,21 @@ CountryVis.prototype.updateVis = function(){
       .data(gender_names.slice().reverse())
     .enter().append("g")
       .attr("class", "legend")
-      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+      .attr("transform", function(d, i) { return "translate(-" + i * 60 + ",200)"; });
 
     legend.append("rect")
-          .attr("x", this.width - 18)
-          .attr("width", 18)
-          .attr("height", 18)
-          .style("fill", color);
+      .attr("x", this.width - 18)
+      .attr("width", 18)
+      .attr("height", 18)
+      .style("fill", color);
 
     legend.append("text")
-          .attr("x", this.width - 24)
-          .attr("y", 9)
-          .attr("dy", ".35em")
-          .style("text-anchor", "end")
-          .text(function(d) { return d; });
+      .attr("x", this.width - 24)
+      .attr("y", 9)
+      .attr("dy", ".35em")
+      .style("text-anchor", "end")
+      .style("fill", "white")
+      .text(function(d) { return d; });
 
 }
 
@@ -196,7 +201,7 @@ CountryVis.prototype.updateVis = function(){
  * be defined here.
  * @param selection
  */
-CountryVis.prototype.onSelectionChange = function (cdata, cname){
+EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname){
 
     console.log("Country is now " + cname + ":");
     console.log(cdata);
@@ -213,7 +218,7 @@ CountryVis.prototype.onSelectionChange = function (cdata, cname){
  * @param _filter - A filter can be, e.g.,  a function that is only true for data of a given time range
  * @returns {Array|*}
  */
-CountryVis.prototype.filterAndAggregate = function(_filter){
+EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
 
 
     // Set filter to a function that accepts all items

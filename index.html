@@ -11,7 +11,7 @@
     <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
 
 	<!--add own vis classes-->
-	<script src = "js/countryvis.js"></script>
+	<script src = "js/emigrantcountryvis.js"></script>
 
 	<!--add own stylesheets-->
 	<link rel="stylesheet" href="/css/style.css" type="text/css">
@@ -37,7 +37,7 @@
 	</div>
 	
 	<div id="container"></div>
-	<div id="countryVis" style="display:none"></div>
+	<div id="emigrantCountryVis" style="display:none"></div>
 
 	<script>
 		var g_data, 
@@ -186,10 +186,10 @@
 
 			// displays countryVis div on country click
 			var MyEventHandler = new Object();
-			var country_vis = new CountryVis(d3.select("#countryVis"), g_data, MyEventHandler);
+			var emigrant_country_vis = new EmigrantCountryVis(d3.select("#emigrantCountryVis"), g_data, MyEventHandler);
 			
 			$(MyEventHandler).bind("selectionChanged", function(event, countrydata, countryname){
-				country_vis.onSelectionChange(countrydata, countryname);
+				emigrant_country_vis.onSelectionChange(countrydata, countryname);
 			})
 			
 			d3.selectAll(".datamaps-subunit").on("click", function(c){
@@ -200,17 +200,16 @@
 				});
 				var countryname = code_lookup[code];
 				
-				$("#countryVis").show();
+				$("#emigrantCountryVis").show();
 
-				console.log(countryname);
 				$(MyEventHandler).trigger("selectionChanged", [countrydata[0], countryname])
 			});
 
 			// removes countryVis div if click outside of country
 			$(document).mouseup(function(e){
-				var countryVisDiv = $("#countryVis");
-				if(!countryVisDiv.is(e.target) && countryVisDiv.has(e.target).length === 0) {
-					countryVisDiv.hide();
+				var emigrantCountryVisDiv = $("#emigrantCountryVis");
+				if(!emigrantCountryVisDiv.is(e.target) && emigrantCountryVisDiv.has(e.target).length === 0) {
+					emigrantCountryVisDiv.hide();
 				}
 			});
 
