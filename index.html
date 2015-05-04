@@ -198,26 +198,35 @@
 				emigrant_country_vis_2.onSelectionChange(countrydata, countryname);
 			})
 			
+			var DELAY = 200, clicks = 0, timer = null;
 			d3.selectAll(".datamaps-subunit").on("click", function(c){
-				var ctry = d3.select(this);
-				var code = ctry.attr("class").split(' ')[1];
-				var countrydata = g_data.filter(function(n){
-					return n.country == code;
-				});
-				var countryname = code_lookup[code];
-				$("#emigrantCountryVis1").show();
-				$(eventHandler1).trigger("selectionChanged", [countrydata[0], countryname])
-			});
-
-			d3.selectAll(".datamaps-subunit").on("dblclick", function(c){
-				var ctry = d3.select(this);
-				var code = ctry.attr("class").split(' ')[1];
-				var countrydata = g_data.filter(function(n){
-					return n.country == code;
-				});
-				var countryname = code_lookup[code];
-				$("#emigrantCountryVis2").show();
-				$(eventHandler2).trigger("selectionChanged", [countrydata[0], countryname])
+				clicks++;
+				if(clicks === 1) {
+					var that = this;
+					timer = setTimeout(function(){
+						var ctry = d3.select(that);
+						var code = ctry.attr("class").split(' ')[1];
+						var countrydata = g_data.filter(function(n){
+							return n.country == code;
+						});
+						var countryname = code_lookup[code];
+						$("#emigrantCountryVis1").show();
+						$(eventHandler1).trigger("selectionChanged", [countrydata[0], countryname]);
+						clicks = 0;
+					}, DELAY);
+				} else {
+					clearTimeout(timer);
+					var ctry = d3.select(this);
+					var code = ctry.attr("class").split(' ')[1];
+					var countrydata = g_data.filter(function(n){
+						return n.country == code;
+					});
+					var countryname = code_lookup[code];
+					$("#emigrantCountryVis1").show();
+					$("#emigrantCountryVis2").show();
+					$(eventHandler2).trigger("selectionChanged", [countrydata[0], countryname]);
+					clicks = 0;
+				}
 			});
 
 			// removes emigrantCountryVis1 and emigrantCountryVis2 div if click outside either country

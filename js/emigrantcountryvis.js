@@ -202,8 +202,8 @@ EmigrantCountryVis.prototype.updateVis = function(){
  */
 EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname){
 
-    console.log("Country is now " + cname + ":");
-    console.log(cdata);
+    // console.log("Country is now " + cname + ":");
+    // console.log(cdata);
 
     this.countryname = cname;
     this.data = cdata;
