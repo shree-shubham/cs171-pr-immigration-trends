@@ -10,7 +10,6 @@
 	<script src="http://d3js.org/queue.v1.min.js"></script>
 	<span class="hdrs">
 		<h1>Immigration Trends</h1>
-		<h2>Sierra Katow & Kristina Hu</h2>
 	</span>
 	<br>
 	<div id="legend">	
@@ -166,6 +165,10 @@
 
 
 		function listener(){
+			d3.select('.slider').on("click", function(){
+
+			});
+
 			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){
 
 		    	var ctry = d3.select(this);
@@ -197,7 +200,7 @@
 		    	var sortedDests = orig.years[0].dests.sort(destSortFunc);
 
 		    	sortedDests = sortedDests.slice(0,10);
-
+		    	console.log(sortedDests);
 
 				sortedDests.forEach(function(destObj, prank){
 					var dest = g_data.filter(function(n){
