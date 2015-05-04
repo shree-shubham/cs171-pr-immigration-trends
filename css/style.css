@@ -49,13 +49,18 @@ position: fixed;
     z-index:999;
     color:#fff;
     border-style: solid;
-    border-width: 2px;
-    border-color: gray;
+    border-width: 1px;
+    border-color: #fff;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
 }
 
-.tick{
+.tick {
+  stroke: #fff;
+  stroke-width: 0.5;
+}
+
+.axis {
   stroke: #fff;
   stroke-width: 1;
 }

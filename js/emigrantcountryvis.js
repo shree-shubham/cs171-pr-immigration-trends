@@ -57,7 +57,6 @@ EmigrantCountryVis.prototype.initVis = function(){
     this.yAxis = d3.svg.axis()
         .scale(y)
         .orient("left")
-        .ticks(6)
         .tickFormat(d3.format(".2s"));
 
     // construct SVG layout
@@ -67,6 +66,7 @@ EmigrantCountryVis.prototype.initVis = function(){
       .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
+    // call axes
     this.svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + this.height + ")")
@@ -174,10 +174,10 @@ EmigrantCountryVis.prototype.updateVis = function(){
 
     // graph legend
     var legend = this.svg.selectAll(".legend")
-      .data(gender_names.slice().reverse())
-    .enter().append("g")
-      .attr("class", "legend")
-      .attr("transform", function(d, i) { return "translate(-" + i * 60 + ",200)"; });
+        .data(gender_names.slice().reverse())
+      .enter().append("g")
+        .attr("class", "legend")
+        .attr("transform", function(d, i) { return "translate(-" + i * 60 + ",200)"; });
 
     legend.append("rect")
       .attr("x", this.width - 18)
