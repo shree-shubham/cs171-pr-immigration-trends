@@ -45,6 +45,9 @@ position: fixed;
     height: 500px;
     font-size: 75%;
     background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    border-color: gray;
     -webkit-transform: translate(-50%, -50%);
     transform: translate(-50%, -50%);
 }

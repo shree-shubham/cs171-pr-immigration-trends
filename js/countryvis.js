@@ -11,9 +11,10 @@
  * @param _eventHandler -- the Eventhandling Object to emit data to (see Task 4)
  * @constructor
  */
-CountryVis = function(_parentElement, _data, _eventHandler){
+CountryVis = function(_parentElement, _data, _countryname, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
+    this.countryname = _countryname;
     this.eventHandler = _eventHandler;
     this.displayData = [];
 
@@ -105,11 +106,11 @@ CountryVis.prototype.initVis = function(){
     // bar chart title
     this.svg.append("text")
         .attr("x", (this.width / 2))
-        .attr("y", 0 - (this.margin.top / 2))
+        .attr("y", 20 - (this.margin.top / 2))
         .attr("text-anchor", "middle")
         .style("font-size", "16px")
         .style("text-decoration", "underline")
-        .text(country);
+        .text(this.countryname);
 
     this.svg.append("g")
       .attr("class", "x axis")

@@ -191,10 +191,11 @@
 				var countrydata = g_data.filter(function(n){
 					return n.country == code;
 				});
+				var countryname = code_lookup[code];
 				$("#countryVis").toggle();
 
 				var MyEventHandler = new Object();
-				var country_vis = new CountryVis(d3.select("#countryVis"), countrydata[0], MyEventHandler);
+				var country_vis = new CountryVis(d3.select("#countryVis"), countrydata[0], countryname, MyEventHandler);
 				
 			});
 
@@ -237,7 +238,7 @@
 		    	var sortedDests = orig.years[0].dests.sort(destSortFunc);
 
 		    	sortedDests = sortedDests.slice(0,10);
-		    	console.log(sortedDests);
+		    	// console.log(sortedDests);
 
 				sortedDests.forEach(function(destObj, prank){
 					var dest = g_data.filter(function(n){
