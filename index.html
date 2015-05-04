@@ -26,7 +26,10 @@
 	</div>
 	<div id="container"></div>
 	<script>
-		var g_data, year = 1970;
+		var g_data, 
+			g_year = 1970,
+			g_direction = "outgoing",
+			g_sex = "both";
 		var code_lookup = {}, arcs = [];
 		var map;
 
@@ -180,12 +183,19 @@
 				if(orig.length > 0){
 					orig = orig[0];
 				
+				// Sort function
 		    	var destSortFunc = function(a, b){
-		    		return d3.descending(a.Female + a.Male, b.Female, b.Male);
+		    		var compa = 0;
+		    		if("Male" in a) compa += a.Male;
+		    		if("Female" in a) compa += a.Female;
+		    		var compb = 0;
+		    		if("Male" in b) compb += b.Male;
+		    		if("Female" in b) compb += b.Female;
+		    		return d3.descending(compa, compb);
 		    	}
 
 		    	var sortedDests = orig.years[0].dests.sort(destSortFunc);
-					
+
 		    	sortedDests = sortedDests.slice(0,10);
 
 
@@ -200,7 +210,7 @@
 						d3.selectAll(".datamaps-subunit").each(function(s){
 							var code = d3.select(this).attr("class").split(' ')[1];
 							if(code == dest.country){
-								var opac = 1.0 - prank/3;
+								var opac = 1.0 - prank/6;
 								d3.select(this).style("fill", "rgba(1,176,240,"+opac+")");
 							}
 						});
