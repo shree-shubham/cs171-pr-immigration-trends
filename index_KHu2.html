@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+
+	<!--Libraries-->
+	<script src="libs/d3/d3.min.js" charset="utf-8"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
+	<script src="/libs/datamaps/datamaps.world.min.js"></script>
+	<script src="http://d3js.org/queue.v1.min.js"></script>
+	<script src="libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
+    <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+
+	<!--add own vis classes-->
+	<script src = "js/countryvis.js"></script>
+
+	<!--add own stylesheets-->
+	<link rel="stylesheet" href="/css/style.css" type="text/css">
+	
+</head>
+<body>
+	<h1>Immigration Trends Visualization</h1>
+	<br>
+
+	<div id="container"></div>
+	<div id="countryVis" style="display:none"></div>
+
+	<script>
+		var g_data, year = 1970;
+		var code_lookup = {}, arcs = [];
+		var map;
+		
+
+		function newyear(){
+			g_data.forEach(function(i){
+				partners[i.country_id] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
+			});
+			rendermap();
+		}
+
+		function processData(error, data, latlongs) {
+			g_data = [];
+			var years = ["1960", "1970", "1980", "1990", "2000"];
+			data.forEach(function(obj) {
+				if(obj.Gender != "Total"){
+
+					var lastIndex = g_data.length - 1; 
+
+					if(lastIndex >= 0 && g_data[lastIndex].country == obj.Origin){
+						var current = g_data[lastIndex];
+						current.years.forEach(function(yearObj){
+
+							var lastDest = yearObj.dests.length - 1;
+							if (lastDest >= 0 && yearObj.dests[lastDest].country == obj.Destination) { // dest exists, add to country
+
+								yearObj.dests[lastDest][obj.Gender] = parseInt(obj[yearObj.year]);
+
+							} else { // dest doesn't exist
+								
+								var newDest = {country: obj.Destination};
+								newDest[obj.Gender] = parseInt(obj[yearObj.year]);
+								yearObj.dests.push(newDest);
+
+							} 
+
+						})
+
+					}else{
+						var thisCountry = latlongs["data"].filter(function(x){
+							return x[10] == obj.Origin;
+						});
+
+
+						if(thisCountry.length > 0){
+							thisCountry = thisCountry[0];
+						}
+
+						var yearsArr = years.map(function(yr){
+							return {
+								year: yr,
+								dests: []
+							}
+						})
+
+						var newCountry = {
+							country: obj.Origin,
+							latitude: parseInt(thisCountry[12]),
+							longitude: parseInt(thisCountry[13]),
+							years: yearsArr
+						}
+
+						g_data.push(newCountry);
+					}
+				}
+			})
+
+			map = new Datamap({
+		    	scope: 'world',
+		    	projection: 'mercator',
+		    	element: document.getElementById('container'),
+		    	fills: {
+		    		defaultFill: 'rgba(0,0,0,0.2)'
+		    	}
+		   	});
+
+		   	rendermap();
+	    }
+
+		function dataLoad() {
+			queue()
+				.defer(d3.csv, "data/data_codes.csv")
+				.defer(d3.json, "data/countries_latlong.json")
+				.await(processData);
+		}
+		
+		dataLoad();
+
+		function id_lookup(name){
+			var x = g_data.filter(function(m){
+				return m.name == name;
+			})
+
+			if(x.length == 0) return -1;
+			else return x[0].country_id;
+		};
+
+		function rendermap(){
+		   	var countries = Datamap.prototype.worldTopo.objects.world.geometries;
+			for (var i = 0, j = countries.length; i < j; i++) {
+				code_lookup[countries[i].id] = countries[i].properties.name;
+			}
+
+			//make some changes to be compatible with our data set
+			code_lookup['USA'] = "United States";
+			code_lookup['TZA'] = "Tanzania";
+
+			// g_data.forEach(function(i){
+			// 	partners[i.country] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
+			// });
+
+		   	
+		    listener();
+		}
+
+		function listener(){
+		
+			// displays countryVis div on country click
+			var MyEventHandler = new Object();
+			var country_vis = new CountryVis(d3.select("#countryVis"), null, MyEventHandler);
+			d3.selectAll(".datamaps-subunit").on("click", function(c){
+				var ctry = d3.select(this);
+				var code = ctry.attr("class").split(' ')[1];
+				var countrydata = g_data.filter(function(n){
+					return n.country == code;
+				});
+				$("#countryVis").toggle();
+				
+				$(MyEventHandler).trigger("selectionChanged", [country,
+					countrydata[0]])
+			});
+
+			// removes countryVis div if click outside of country
+			$(document).mouseup(function(e){
+				var countryVisDiv = $("#countryVis");
+				if(!countryVisDiv.is(e.target) && countryVisDiv.has(e.target).length === 0) {
+					countryVisDiv.hide();
+				}
+			});
+
+			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){
+
+		    	var ctry = d3.select(this);
+		    	var code = ctry.attr("class").split(' ')[1];
+		    	ctry.style("fill", "rgba(0, 0, 0, 0.5)");
+		    
+		    	var arcs = [];
+
+
+
+		    	var orig = g_data.filter(function(n){
+					return n.country == code;
+				});
+
+				if(orig.length > 0){
+					orig = orig[0];
+				
+		    	var destSortFunc = function(a, b){
+		    		return d3.descending(a.Female + a.Male, b.Female, b.Male);
+		    	}
+
+		    	var sortedDests = orig.years[0].dests.sort(destSortFunc);
+					
+		    	sortedDests = sortedDests.slice(0,10);
+
+
+				sortedDests.forEach(function(destObj, prank){
+					var dest = g_data.filter(function(n){
+						return n.country == destObj.country;
+					});
+
+					if(dest.length > 0){
+						dest = dest[0];
+
+						d3.selectAll(".datamaps-subunit").each(function(s){
+							var code = d3.select(this).attr("class").split(' ')[1];
+							if(code == dest.country){
+								var opac = 1.0 - prank/10;
+								d3.select(this).style("fill", "rgba(188,52,68,"+opac+")");
+							}
+						});
+
+						if(typeof(orig) !== "undefined" && typeof(dest) !== "undefined"){
+							arcs.push({
+								origin: {
+									latitude: orig.latitude,
+									longitude: orig.longitude
+								},
+								destination: {
+									latitude: dest.latitude,
+									longitude: dest.longitude
+								}
+							})
+						}
+					}
+				})
+			}
+					
+		    	map.arc(arcs, {
+					strokeColor: '#000000',
+					strokeWidth: 1,
+					arcSharpness: 1,
+				});
+		    }).on("mouseout", function(c){
+		    	d3.selectAll(".datamaps-subunit")
+		    		.style("fill", "rgba(0,0,0,0.2)");
+		    	map.arc([], {
+					strokeColor: '#000000',
+					strokeWidth: 1,
+					arcSharpness: 1,
+				});
+		    });
+
+			d3.selectAll("select")
+				.each(function(d){
+					if(d3.select(this).attr("name") == 'year'){
+						d3.select(this).on("change", function(){
+							year = d3.select(this).property("value");
+							newyear();
+						});
+					}
+				});
+
+		}
+
+
+	</script>
+</body>
+</html>
