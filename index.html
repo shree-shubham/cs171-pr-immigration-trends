@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <head>
-	<link rel="stylesheet" href="/css/style.css" type="text/css">
-</head>
-<body>
-	<script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.3/d3.min.js"></script>
+
+	<!--Libraries-->
+	<script src="libs/d3/d3.min.js" charset="utf-8"></script>
 	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
 	<script src="/libs/datamaps/datamaps.world.min.js"></script>
 	<script src="http://d3js.org/queue.v1.min.js"></script>
+	<script src="libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
+    <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+
+	<!--add own vis classes-->
+	<script src = "js/countryvis.js"></script>
+
+	<!--add own stylesheets-->
+	<link rel="stylesheet" href="/css/style.css" type="text/css">
+
 	<span class="hdrs">
 		<h1>Immigration Trends</h1>
 	</span>
 	<br>
+
+</head>
+<body>
+	
 	<div id="legend">	
 	    <b>Year:</b> 1960
 	        <input class = "slider" type="range" name="points" min="1960" max="2000" step="10" value="1960" id="slider-time" oninput=";"> 2000
@@ -23,7 +35,10 @@
 		    <label><input class="female_button" type="radio" value="female">Females Only</label>
 		    <label><input class="male_button" type="radio" value="male" >Males Only</label>
 	</div>
+	
 	<div id="container"></div>
+	<div id="countryVis" style="display:none"></div>
+
 	<script>
 		var g_data, 
 			g_year = 1970,
@@ -167,6 +182,28 @@
 		function listener(){
 			d3.select('.slider').on("click", function(){
 
+			});
+
+			// displays countryVis div on country click
+			d3.selectAll(".datamaps-subunit").on("click", function(c){
+				var ctry = d3.select(this);
+				var code = ctry.attr("class").split(' ')[1];
+				var countrydata = g_data.filter(function(n){
+					return n.country == code;
+				});
+				$("#countryVis").toggle();
+
+				var MyEventHandler = new Object();
+				var country_vis = new CountryVis(d3.select("#countryVis"), countrydata[0], MyEventHandler);
+				
+			});
+
+			// removes countryVis div if click outside of country
+			$(document).mouseup(function(e){
+				var countryVisDiv = $("#countryVis");
+				if(!countryVisDiv.is(e.target) && countryVisDiv.has(e.target).length === 0) {
+					countryVisDiv.hide();
+				}
 			});
 
 			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){

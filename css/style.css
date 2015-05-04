@@ -34,3 +34,17 @@ html, body{
 .hdrs h1, h2{
     margin:0px;
 }
+
+#countryVis{
+position: fixed;
+    top: 50%;
+    right: 50%;
+    left: 50%;
+    bottom: 50%;
+    width: 900px; 
+    height: 500px;
+    font-size: 75%;
+    background-color: white;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
