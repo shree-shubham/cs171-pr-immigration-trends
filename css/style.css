@@ -35,11 +35,31 @@ html, body{
     margin:0px;
 }
 
-#emigrantCountryVis{
+#emigrantCountryVis1{
 position: fixed;
     top: 50%;
     right: 50%;
     left: 25%;
+    bottom: 50%;
+    width: 450px; 
+    height: 250px;
+    font-size: 75%;
+    background-color: rgba(0,0,0,0.7);
+    padding:10px;
+    z-index:999;
+    color:#ffffff;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #ffffff;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#emigrantCountryVis2{
+position: fixed;
+    top: 50%;
+    right: 50%;
+    left: 75%;
     bottom: 50%;
     width: 450px; 
     height: 250px;
