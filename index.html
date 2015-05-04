@@ -186,6 +186,12 @@
 
 			// displays countryVis div on country click
 			var MyEventHandler = new Object();
+			var country_vis = new CountryVis(d3.select("#countryVis"), g_data, MyEventHandler);
+			
+			$(MyEventHandler).bind("selectionChanged", function(event, countrydata, countryname){
+				country_vis.onSelectionChange(countrydata, countryname);
+			})
+			
 			d3.selectAll(".datamaps-subunit").on("click", function(c){
 				var ctry = d3.select(this);
 				var code = ctry.attr("class").split(' ')[1];
@@ -193,9 +199,11 @@
 					return n.country == code;
 				});
 				var countryname = code_lookup[code];
-				$("#countryVis").toggle();
+				
+				$("#countryVis").show();
 
-				var country_vis = new CountryVis(d3.select("#countryVis"), countrydata[0], countryname, MyEventHandler);
+				console.log(countryname);
+				$(MyEventHandler).trigger("selectionChanged", [countrydata[0], countryname])
 			});
 
 			// removes countryVis div if click outside of country

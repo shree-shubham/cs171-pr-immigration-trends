@@ -11,10 +11,10 @@
  * @param _eventHandler -- the Eventhandling Object to emit data to (see Task 4)
  * @constructor
  */
-CountryVis = function(_parentElement, _data, _countryname, _eventHandler){
+CountryVis = function(_parentElement, _data, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
-    this.countryname = _countryname;
+    this.countryname = "";
     this.eventHandler = _eventHandler;
     this.displayData = [];
 
@@ -33,44 +33,7 @@ CountryVis.prototype.initVis = function(){
 
     var that = this;
 
-    // process raw data and populate this.displayData
-    var country = this.data.country;
-    var latitude = this.data.latitude;
-    var longitude = this.data.longitude;
     var gender_names = ["Female", "Male", "Total"];
-    this.data.years.forEach(function(d){
-        var male_emigrants = 0;
-        var female_emigrants = 0;
-        d.dests.forEach(function(d){
-            if (!isNaN(d["Male"]))
-                male_emigrants += d["Male"];
-            if (!isNaN(d["Female"]))
-                female_emigrants += d["Female"];
-        });
-        var total_emigrants = male_emigrants + female_emigrants;
-        var genderdata = [
-            {
-                name: "Male",
-                value: male_emigrants
-            },
-            {
-                name: "Female",
-                value: female_emigrants
-            },
-            {
-                name: "Total",
-                value: total_emigrants
-            }
-        ];
-        var yeardata = {
-            year: d.year,
-            male: male_emigrants,
-            female: female_emigrants,
-            total: total_emigrants,
-            genders: genderdata
-        };
-        that.displayData.push(yeardata);
-    });
     
     // create axis and scales
     var x0 = d3.scale.ordinal()
@@ -103,15 +66,6 @@ CountryVis.prototype.initVis = function(){
       .append("g")
         .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
 
-    // bar chart title
-    this.svg.append("text")
-        .attr("x", (this.width / 2))
-        .attr("y", 20 - (this.margin.top / 2))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("text-decoration", "underline")
-        .text(this.countryname);
-
     this.svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + this.height + ")")
@@ -127,11 +81,6 @@ CountryVis.prototype.initVis = function(){
       .style("text-anchor", "end")
       .text("Number of emigrants");
 
-    // filter, aggregate, modify data
-    this.wrangleData(null);
-
-    // call the update method
-    this.updateVis();
 }
 
 /**
@@ -193,6 +142,16 @@ CountryVis.prototype.updateVis = function(){
     // removes all rectangles
     this.svg.selectAll("rect").remove();
 
+    // update bar chart title
+    this.svg.selectAll("text").remove();
+    this.svg.append("text")
+        .attr("x", (this.width / 2))
+        .attr("y", 20 - (this.margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
+        .text(this.countryname);
+
     // add rectangles
     var year = this.svg.selectAll(".year")
       .data(this.displayData)
@@ -239,7 +198,8 @@ CountryVis.prototype.updateVis = function(){
  */
 CountryVis.prototype.onSelectionChange = function (cdata, cname){
 
-    console.log("Country is now " + cname + " with data " + cdata);
+    console.log("Country is now " + cname + ":");
+    console.log(cdata);
 
     this.countryname = cname;
     this.data = cdata;
