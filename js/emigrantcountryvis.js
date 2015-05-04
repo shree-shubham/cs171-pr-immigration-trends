@@ -81,7 +81,7 @@ EmigrantCountryVis.prototype.initVis = function(){
       .attr("dy", ".71em")
       .style("text-anchor", "end")
       .style("fill", "white")
-      .text("EMIGRANTS");
+      .text("emigrants");
 }
 
 /**
@@ -166,7 +166,7 @@ EmigrantCountryVis.prototype.updateVis = function(){
     year.selectAll("rect")
       .data(function(d) { return d.genders; })
     .enter().append("rect")
-      .attr("width", x1.rangeBand())
+      .attr("width", x1.rangeBand()-2)
       .attr("x", function(d) { return x1(d.name); })
       .attr("y", function(d) { return y(d.value); })
       .attr("height", function(d) { return that.height - y(d.value); })
@@ -177,17 +177,16 @@ EmigrantCountryVis.prototype.updateVis = function(){
         .data(gender_names.slice().reverse())
       .enter().append("g")
         .attr("class", "legend")
-        .attr("transform", function(d, i) { return "translate(-" + i * 60 + ",200)"; });
+        .attr("transform", function(d, i) { return "translate(" + i * 70 + ",210)"; });
 
-    legend.append("rect")
-      .attr("x", this.width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
+    legend.append("circle")
+      .attr("cx", this.width - 250)
+      .attr("r", 5)
       .style("fill", color);
 
     legend.append("text")
-      .attr("x", this.width - 24)
-      .attr("y", 9)
+      .attr("x", this.width - 260)
+      .attr("y", 2)
       .attr("dy", ".35em")
       .style("text-anchor", "end")
       .style("fill", "white")
