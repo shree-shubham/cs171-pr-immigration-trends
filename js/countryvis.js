@@ -232,6 +232,23 @@ CountryVis.prototype.updateVis = function(){
 }
 
 /**
+ * Gets called by event handler and should create new aggregated data
+ * aggregation is done by the function "aggregate(filter)". Filter has to
+ * be defined here.
+ * @param selection
+ */
+CountryVis.prototype.onSelectionChange = function (cdata, cname){
+
+    console.log("Country is now " + cname + " with data " + cdata);
+
+    this.countryname = cname;
+    this.data = cdata;
+
+    this.wrangleData(null);
+    this.updateVis();
+}
+
+/**
  * The aggregate function that creates the counts for each age for a given filter.
  * @param _filter - A filter can be, e.g.,  a function that is only true for data of a given time range
  * @returns {Array|*}
@@ -289,7 +306,7 @@ CountryVis.prototype.filterAndAggregate = function(_filter){
         };
         that.displayData.push(yeardata);
     });
-    console.log(this.displayData);
+    // console.log(this.displayData);
 
     return this.displayData;
 
