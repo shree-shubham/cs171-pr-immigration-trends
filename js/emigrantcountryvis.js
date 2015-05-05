@@ -144,18 +144,6 @@ EmigrantCountryVis.prototype.updateVis = function(){
     // removes all rectangles
     this.svg.selectAll("rect").remove();
 
-    // update bar chart title
-    this.svg.select(".title").remove();
-    this.svg.append("text")
-        .attr("class", "title")
-        .attr("x", (this.width / 2))
-        .attr("y", 15 - (this.margin.top / 2))
-        .attr("text-anchor", "middle")
-        .style("font-size", "16px")
-        .style("font-weight", "bold")
-        .style("fill", "white")
-        .text(this.countryname + " - Emigrants");
-
     // add rectangles
     var year = this.svg.selectAll(".year")
       .data(this.displayData)
@@ -191,6 +179,18 @@ EmigrantCountryVis.prototype.updateVis = function(){
       .style("text-anchor", "end")
       .style("fill", "white")
       .text(function(d) { return d; });
+
+    // update bar chart title
+    this.svg.select(".title").remove();
+    this.svg.append("text")
+        .attr("class", "title")
+        .attr("x", (this.width / 2))
+        .attr("y", 5 - (this.margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("font-weight", "bold")
+        .style("fill", "white")
+        .text(this.countryname + " - Emigrants");
 
 }
 

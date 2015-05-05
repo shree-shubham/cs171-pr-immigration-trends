@@ -50,7 +50,7 @@
 	<div id="immigrantCountryVis2" style="display:none"></div>
 
 	<script>
-		var g_data, 
+		var g_data, gdp_data, infant_mortality_data, life_expectancy_data,
 			g_year = 1970,
 			g_direction = "outgoing",
 			g_sex = "both";
@@ -82,9 +82,13 @@
 			rendermap();
 		}
 
-		function processData(error, data, latlongs) {
+		function processData(error, data, latlongs, gdps, infantmortalities, lifeexpectancies) {
 			g_data = [];
+			gdp_data = [];
+			infant_mortality_data = [];
+			life_expectancy_data = [];
 			var years = ["1960", "1970", "1980", "1990", "2000"];
+
 			data.forEach(function(obj) {
 				if(obj.Gender != "Total"){
 
@@ -135,7 +139,94 @@
 						g_data.push(newCountry);
 					}
 				}
-			})
+			});
+
+			// process GDP data
+			gdps.forEach(function(d){
+				var gdp1960, gdp1970, gdp1980, gdp1990, gdp2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					gdp1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					gdp1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					gdp1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					gdp1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					gdp2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": gdp1960,
+						"1970": gdp1970,
+						"1980": gdp1980,
+						"1990": gdp1990,
+						"2000": gdp2000
+					}
+				}
+				gdp_data.push(newCountry);
+			});
+
+			// process infant mortality data
+			infantmortalities.forEach(function(d){
+				var im1960, im1970, im1980, im1990, im2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					im1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					im1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					im1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					im1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					im2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": im1960,
+						"1970": im1970,
+						"1980": im1980,
+						"1990": im1990,
+						"2000": im2000
+					}
+				}
+				infant_mortality_data.push(newCountry);
+			});
+
+			// process life expectancy data
+			lifeexpectancies.forEach(function(d){
+				var le1960, le1970, le1980, le1990, le2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					le1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					le1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					le1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					le1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					le2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": le1960,
+						"1970": le1970,
+						"1980": le1980,
+						"1990": le1990,
+						"2000": le2000
+					}
+				}
+				life_expectancy_data.push(newCountry);
+			});
 
 		   	drawMap();
 		   	rendermap();
@@ -145,6 +236,9 @@
 			queue()
 				.defer(d3.csv, "data/data_codes.csv")
 				.defer(d3.json, "data/countries_latlong.json")
+				.defer(d3.csv, "data/gdp_data.csv")
+				.defer(d3.csv, "data/infant_mortality_data.csv")
+				.defer(d3.csv, "data/life_expectancy_data.csv")
 				.await(processData);
 		}
 		
@@ -184,10 +278,8 @@
 			code_lookup['USA'] = "United States";
 			code_lookup['TZA'] = "Tanzania";
 
-		   	
 		    listener();
 		}
-
 
 		function listener(){
 			d3.select('.slider').on("click", function(){
