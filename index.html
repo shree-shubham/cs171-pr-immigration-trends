@@ -40,12 +40,12 @@
 			</datalist>
 			
 	    <br><br>
-			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked> Emigration (Outgoing)</label>
-		    <label><input name="direction" class="incoming_button" type="radio" value="ingoing"> Immigration (Ingoing)</label>
+			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked> Emigration (Outgoing) </label>
+		    <label><input name="direction" class="incoming_button" type="radio" value="ingoing"> Immigration (Ingoing) </label>
 	 	<br><br>
-	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes</label>
-		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only</label>
-		    <label><input name="sex" class="female_button" type="radio" value="2">Males Only</label>
+	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes </label>
+		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only </label>
+		    <label><input name="sex" class="female_button" type="radio" value="2">Males Only </label>
 		    
 		<br><br>
 		Click once on a country to examine migration numbers in more detail.  
@@ -499,23 +499,34 @@
 
 				var sortedDests;
 				
+				function relevantNums(obj){
+					var output = 0;
+					if("Male" in obj && g_sex != 1) output += obj.Male;
+		    		if("Female" in obj && g_sex != 2) output += obj.Female;
+		    		return output;
+				}
+
 				// Sort function - emigration
 				if(g_direction == "outgoing"){
 			    	var destSortFunc = function(a, b){
-			    		var compa = 0;
-			    		if("Male" in a && g_sex != 1) compa += a.Male;
-			    		if("Female" in a && g_sex != 2) compa += a.Female;
-			    		var compb = 0;
-			    		if("Male" in b && g_sex != 1) compb += b.Male;
-			    		if("Female" in b && g_sex != 2) compb += b.Female;
-			    		return d3.descending(compa, compb);
+			    		return d3.descending(relevantNums(a), relevantNums(b));
 			    	}
 
 			    	sortedDests = orig.years[g_year].dests.sort(destSortFunc);
 
-			    	sortedDests = sortedDests.slice(0,10);
-			    	console.log(sortedDests);
+			    	var total = d3.sum(sortedDests, function(d){
+			    		return relevantNums(d);
+			    	})
+
+			    	var end = 0, sum = 0;
+
+			   		while(sum/total < 0.75){
+			   			sum += relevantNums(sortedDests[end]);
+			   			end += 1;
+			   		};
+			   		sortedDests = sortedDests.slice(0, end);
 			    }else if(g_direction == "ingoing"){
+
 			    	var destSortFunc = function(a, b){
 			    		var a = a.years[g_year].dests.filter(function(n){
 			    			return n.country == reconcile(code);
@@ -525,13 +536,8 @@
 			    			return n.country == reconcile(code);
 			    		});
 			    		b = b[0];
-			    		var compa = 0;
-			    		if("Male" in a && g_sex != 1) compa += a.Male;
-			    		if("Female" in a && g_sex != 0) compa += a.Female;
-			    		var compb = 0;
-			    		if("Male" in b && g_sex != 1) compb += b.Male;
-			    		if("Female" in b && g_sex != 0) compb += b.Female;
-			    		return d3.descending(compa, compb);
+
+			    		return d3.descending(relevantNums(a), relevantNums(b));
 			    	};
 
 			    	sortedDests = g_data.filter(function(n){
@@ -544,8 +550,24 @@
 			    		return found;
 			    	});
 
-			    	sortedDests.sort(destSortFunc);
-			    	sortedDests = sortedDests.slice(0,10);
+			    	sortedDests = sortedDests.sort(destSortFunc);
+
+			    	var total = d3.sum(sortedDests, function(d){
+			    		var d = d.years[g_year].dests.filter(function(n){
+			    			return n.country == reconcile(code);
+			    		});
+			    		d = d[0];
+			    		return relevantNums(d);
+			    	});
+
+			    	var end = 0, sum = 0;
+
+			    	while(sum/total < 0.75){
+			    		sum += relevantNums(sortedDests[end].years[g_year].dests.filter(function(n){ return n.country == reconcile(code); })[0]);
+			    		end += 1;
+			    	}
+			    	sortedDests = sortedDests.slice(0, end);
+
 			    }
 
 				sortedDests.forEach(function(destObj, prank){
@@ -559,7 +581,7 @@
 						d3.selectAll(".datamaps-subunit").each(function(s){
 							var code = d3.select(this).attr("class").split(' ')[1];
 							if(code == dest.country){
-								var opac = 1.0 - prank/11;
+								var opac = 1.0 - prank/(sortedDests.length + 1);
 								// console.log(opac);
 								d3.select(this).style("fill", "rgba(1,176,240,"+opac+")");
 							}
