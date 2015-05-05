@@ -29,12 +29,12 @@
 	    <b>Year:</b> 1960
 	        <input class = "slider" type="range" name="points" min="1960" max="2000" step="10" value="1960" id="slider-time" oninput=";"> 2000
 	    <br><br>
-			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked>Outgoing (Emigrants)</label>
-		    <label><input name="direction" class="incoming_button" type="radio" value="incoming"> Incoming (Immigrants)</label>
+			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked> Emigration (Outgoing)</label>
+		    <label><input name="direction" class="incoming_button" type="radio" value="ingoing"> Immigration (Ingoing)</label>
 	 	<br><br>
-	  		<label><input name="gender" class="both_button" type="radio" value="both" checked>Both Sexes</label>
-		    <label><input name="gender" class="female_button" type="radio" value="female">Females Only</label>
-		    <label><input name="gender" class="male_button" type="radio" value="male" >Males Only</label>
+		    <label><input name="sex" class="male_button" type="radio" value="0">Females Only</label>
+		    <label><input name="sex" class="female_button" type="radio" value="1" >Males Only</label>
+		    <label><input name="sex" class="both_button" type="radio" value="2" checked>Both Sexes</label>
 		<br><br>
 		Click once on a country to examine migration numbers in more detail.  
 		<br>
@@ -51,10 +51,12 @@
 
 	<script>
 		var g_data, gdp_data, infant_mortality_data, life_expectancy_data,
-			g_year = 1960,
+			g_year = 0,
 			g_direction = "outgoing",
-			g_sex = "both";
+			g_sex = 2;
 		var code_lookup = {}, arcs = [];
+		var colors = d3.scale.category10();
+		var arcColor = colors[g_sex];
 		var map;
 
 		var w = window,
@@ -286,6 +288,20 @@
 
 			});
 
+			d3.selectAll('input').each(function(d){
+				if(d3.select(this).attr("name") == "direction"){
+					d3.select(this).on("click", function(x){
+						g_direction = d3.select(this).attr("value");
+					})
+				}else if(d3.select(this).attr("name") == "sex"){
+					d3.select(this).on("click", function(x){
+						g_sex = parseInt(d3.select(this).attr("value"));
+						console.log(g_sex);
+						arcColor = colors[g_sex];
+					})
+				}
+			});
+
 			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
 			var eventHandler1 = new Object();
 			var eventHandler2 = new Object();
@@ -447,22 +463,57 @@
 
 				if(orig.length > 0){
 					orig = orig[0];
+
+				var sortedDests;
 				
-				// Sort function
-		    	var destSortFunc = function(a, b){
-		    		var compa = 0;
-		    		if("Male" in a) compa += a.Male;
-		    		if("Female" in a) compa += a.Female;
-		    		var compb = 0;
-		    		if("Male" in b) compb += b.Male;
-		    		if("Female" in b) compb += b.Female;
-		    		return d3.descending(compa, compb);
-		    	}
+				// Sort function - emigration
+				if(g_direction == "outgoing"){
+			    	var destSortFunc = function(a, b){
+			    		var compa = 0;
+			    		if("Male" in a && g_sex != 1) compa += a.Male;
+			    		if("Female" in a && g_sex != 0) compa += a.Female;
+			    		var compb = 0;
+			    		if("Male" in b && g_sex != 1) compb += b.Male;
+			    		if("Female" in b && g_sex != 0) compb += b.Female;
+			    		return d3.descending(compa, compb);
+			    	}
 
-		    	var sortedDests = orig.years[1].dests.sort(destSortFunc);
+			    	sortedDests = orig.years[g_year].dests.sort(destSortFunc);
 
-		    	sortedDests = sortedDests.slice(0,10);
-		    	// console.log(sortedDests);
+			    	sortedDests = sortedDests.slice(0,10);
+			    	console.log(sortedDests);
+			    }else if(g_direction == "ingoing"){
+			    	var destSortFunc = function(a, b){
+			    		var a = a.years[g_year].dests.filter(function(n){
+			    			return n.country == code;
+			    		});
+			    		a = a[0];
+			    		var b = b.years[g_year].dests.filter(function(n){
+			    			return n.country == code;
+			    		});
+			    		b = b[0];
+			    		var compa = 0;
+			    		if("Male" in a && g_sex != 1) compa += a.Male;
+			    		if("Female" in a && g_sex != 0) compa += a.Female;
+			    		var compb = 0;
+			    		if("Male" in b && g_sex != 1) compb += b.Male;
+			    		if("Female" in b && g_sex != 0) compb += b.Female;
+			    		return d3.descending(compa, compb);
+			    	};
+
+			    	sortedDests = g_data.filter(function(n){
+			    		var found = false;
+			    		n.years[g_year].dests.forEach(function(d){
+			    			if(d.country == code){
+			    				found = true;
+			    			}
+			    		})
+			    		return found;
+			    	});
+
+			    	sortedDests.sort(destSortFunc);
+			    	sortedDests = sortedDests.slice(0,10);
+			    }
 
 				sortedDests.forEach(function(destObj, prank){
 					var dest = g_data.filter(function(n){
@@ -475,29 +526,44 @@
 						d3.selectAll(".datamaps-subunit").each(function(s){
 							var code = d3.select(this).attr("class").split(' ')[1];
 							if(code == dest.country){
-								var opac = 1.0 - prank/6;
+								var opac = 1.0 - prank/8;
 								d3.select(this).style("fill", "rgba(1,176,240,"+opac+")");
 							}
 						});
 
 						if(typeof(orig) !== "undefined" && typeof(dest) !== "undefined"){
-							arcs.push({
-								origin: {
-									latitude: orig.latitude,
-									longitude: orig.longitude
-								},
-								destination: {
-									latitude: dest.latitude,
-									longitude: dest.longitude
-								}
-							})
+							if(g_direction == "outgoing"){
+								arcs.push({
+									origin: {
+										latitude: orig.latitude,
+										longitude: orig.longitude
+									},
+									destination: {
+										latitude: dest.latitude,
+										longitude: dest.longitude
+									}
+								})
+							}else if(g_direction == "ingoing"){
+								arcs.push({
+									origin: {
+										latitude: dest.latitude,
+										longitude: dest.longitude
+									},
+									destination: {
+										latitude: orig.latitude,
+										longitude: orig.longitude
+									}
+								})
+							}
 						}
 					}
 				})
 			}
-					
+				
+
+
 		    	map.arc(arcs, {
-					strokeColor: '#AEEE00',
+					strokeColor: arcColor,
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
@@ -505,7 +571,7 @@
 		    	d3.selectAll(".datamaps-subunit")
 		    		.style("fill", "rgba(255,255,255,0.5)");
 		    	map.arc([], {
-					strokeColor: '#AEEE00',
+					strokeColor: arcColor,
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
