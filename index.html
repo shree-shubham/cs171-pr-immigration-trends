@@ -338,10 +338,10 @@
 			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
 			var eventHandler1 = new Object();
 			var eventHandler2 = new Object();
-			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, eventHandler1);
-			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, eventHandler1);
-			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, eventHandler2);
-			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, eventHandler2);
+			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler1);
+			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler1);
+			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler2);
+			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler2);
 			
 			// gets the maximum y value of the two countries being analyzed for purposes of standardizing the y-axis across
 			function getMaxY1(){
@@ -362,19 +362,19 @@
 			}
 
 			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
-				emigrant_country_vis_1.onSelectionChange(countrydata, countryname, ymax);
+				emigrant_country_vis_1.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
 				// recalculate ymax
 				ymax = getMaxY1();
-				emigrant_country_vis_1.onSelectionChange(countrydata, countryname, ymax);
+				emigrant_country_vis_1.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
 			})
 			$(eventHandler2).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
-				emigrant_country_vis_2.onSelectionChange(countrydata, countryname, ymax);
+				emigrant_country_vis_2.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
 				// recalculate ymax
 				ymax = getMaxY2();
-				emigrant_country_vis_2.onSelectionChange(countrydata, countryname, ymax);
+				emigrant_country_vis_2.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
 			})
 			

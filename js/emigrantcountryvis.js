@@ -1,9 +1,16 @@
-EmigrantCountryVis = function(_parentElement, _data, _eventHandler){
+EmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortalitydata, _lifeexpectancydata, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
+    this.gdpdata = _gdpdata;
+    this.infantmortalitydata = _infantmortalitydata;
+    this.lifeexpectancydata = _lifeexpectancydata;
     this.countryname = "";
+    this.countrycode = "";
     this.eventHandler = _eventHandler;
     this.displayData = [];
+    this.countryGDPdata = [];
+    this.countryIMdata = [];
+    this.countryLEdata = [];
 
     // defines constants
     this.margin = {top: 25, right: 25, bottom: 50, left: 40},
@@ -189,14 +196,15 @@ EmigrantCountryVis.prototype.updateVis = function(){
  * be defined here.
  * @param selection
  */
-EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname, ymax){
+EmigrantCountryVis.prototype.onSelectionChange = function (code, cdata, cname, ymax){
 
-    // console.log("Country is now " + cname + ":");
+    // console.log("Country is now " + cname + " with code: " + code);
     // console.log(cdata);
 
     this.countryname = cname;
     this.data = cdata;
     this.ymax = ymax;
+    this.countrycode = code;
 
     this.wrangleData(null);
     this.updateVis();
@@ -209,7 +217,6 @@ EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname, ymax){
  */
 EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
 
-
     // Set filter to a function that accepts all items
     // ONLY if the parameter _filter is NOT null use this parameter
     var filter = function(){return true;}
@@ -221,7 +228,7 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
 
     var that = this;
 
-    // TODO: filter data
+    // build emigration data
     this.displayData = [];
     var country = this.data.country;
     var latitude = this.data.latitude;
@@ -261,6 +268,39 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         that.displayData.push(yeardata);
     });
     // console.log(this.displayData);
+
+    // update country GDP data to contain only GDP data for the country
+    this.countryGDPdata = [];
+    this.gdpdata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryGDPdata.push(d);
+        }
+    });
+    this.countryGDPdata = this.countryGDPdata[0];
+    // console.log("GDP DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryGDPdata);
+
+    // update country infant mortality data to contain only infant mortality data for the country
+    this.countryIMdata = [];
+    this.infantmortalitydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryIMdata.push(d);
+        }
+    });
+    this.countryIMdata = this.countryIMdata[0];
+    // console.log("INFANT MORTALITY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryIMdata);
+
+    // update country life expectancy data to contain only life expectancy data for the country
+    this.countryLEdata = [];
+    this.lifeexpectancydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryLEdata.push(d);
+        }
+    });
+    this.countryLEdata = this.countryLEdata[0];
+    // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryLEdata);
 
     return this.displayData;
 

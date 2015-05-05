@@ -1,10 +1,16 @@
-ImmigrantCountryVis = function(_parentElement, _data, _eventHandler){
+ImmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortalitydata, _lifeexpectancydata, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
     this.countrycode = "";
     this.countryname = "";
+    this.gdpdata = _gdpdata;
+    this.infantmortalitydata = _infantmortalitydata;
+    this.lifeexpectancydata = _lifeexpectancydata;
     this.eventHandler = _eventHandler;
     this.displayData = [];
+    this.countryGDPdata = [];
+    this.countryIMdata = [];
+    this.countryLEdata = [];
 
     // defines constants
     this.margin = {top: 25, right: 25, bottom: 50, left: 40},
@@ -192,8 +198,7 @@ ImmigrantCountryVis.prototype.updateVis = function(){
  */
 ImmigrantCountryVis.prototype.onSelectionChange = function (code, cname, ymax){
 
-    // console.log("Country is now " + cname + ":");
-    // console.log(cdata);
+    // console.log("Country is now " + cname + " with code: " + code);
 
     this.countrycode = code;
     this.countryname = cname;
@@ -403,6 +408,39 @@ ImmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         genders: genderdata_2000
     }
     this.displayData.push(data2000);
+
+    // update country GDP data to contain only GDP data for the country
+    this.countryGDPdata = [];
+    this.gdpdata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryGDPdata.push(d);
+        }
+    });
+    this.countryGDPdata = this.countryGDPdata[0];
+    // console.log("GDP DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryGDPdata);
+
+    // update country infant mortality data to contain only infant mortality data for the country
+    this.countryIMdata = [];
+    this.infantmortalitydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryIMdata.push(d);
+        }
+    });
+    this.countryIMdata = this.countryIMdata[0];
+    // console.log("INFANT MORTALITY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryIMdata);
+
+    // update country life expectancy data to contain only life expectancy data for the country
+    this.countryLEdata = [];
+    this.lifeexpectancydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryLEdata.push(d);
+        }
+    });
+    this.countryLEdata = this.countryLEdata[0];
+    // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryLEdata);
 
     return this.displayData;
 
