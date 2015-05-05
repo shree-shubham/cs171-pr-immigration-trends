@@ -41,7 +41,7 @@ ImmigrantCountryVis.prototype.initVis = function(){
         .domain(gender_names)
         .rangeRoundBands([0, x0.rangeBand()]);
 
-    var y = d3.scale.linear()
+    var y1 = d3.scale.linear()
         // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .domain([0, this.ymax])
         .range([this.height, 0]);
@@ -52,8 +52,8 @@ ImmigrantCountryVis.prototype.initVis = function(){
         .scale(x0)
         .orient("bottom");
 
-    this.yAxis = d3.svg.axis()
-        .scale(y)
+    this.y1Axis = d3.svg.axis()
+        .scale(y1)
         .orient("left")
         .tickFormat(d3.format(".2s"));
 
@@ -72,7 +72,7 @@ ImmigrantCountryVis.prototype.initVis = function(){
 
     this.svg.append("g")
       .attr("class", "y axis")
-      .call(this.yAxis)
+      .call(this.y1Axis)
     .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 6)
@@ -116,7 +116,7 @@ ImmigrantCountryVis.prototype.updateVis = function(){
         .domain(gender_names)
         .rangeRoundBands([0, x0.rangeBand()]);
 
-    var y = d3.scale.linear()
+    var y1 = d3.scale.linear()
         // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .domain([0, this.ymax])
         .range([this.height, 0]);
@@ -127,7 +127,7 @@ ImmigrantCountryVis.prototype.updateVis = function(){
         .scale(x0)
         .orient("bottom");
 
-    this.yAxis = d3.svg.axis()
+    this.y1Axis = d3.svg.axis()
         .scale(y)
         .orient("left")
         .ticks(6)
@@ -137,8 +137,8 @@ ImmigrantCountryVis.prototype.updateVis = function(){
     this.svg.select(".x.axis")
         .call(this.xAxis);
 
-    this.svg.select(".y.axis")
-        .call(this.yAxis);
+    this.svg.select(".y1.axis")
+        .call(this.y1Axis);
 
     // removes all rectangles
     this.svg.selectAll("rect").remove();
@@ -155,8 +155,8 @@ ImmigrantCountryVis.prototype.updateVis = function(){
     .enter().append("rect")
       .attr("width", x1.rangeBand()-2)
       .attr("x", function(d) { return x1(d.name); })
-      .attr("y", function(d) { return y(d.value); })
-      .attr("height", function(d) { return that.height - y(d.value); })
+      .attr("y", function(d) { return y1(d.value); })
+      .attr("height", function(d) { return that.height - y1(d.value); })
       .style("fill", function(d) { return color(d.name); });
 
     // graph legend
@@ -457,6 +457,14 @@ ImmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
     this.countryLEdata = this.countryLEdata[0];
     // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryLEdata);
+
+    if (this.metric == "gdp")
+        this.displayData2 = this.countryGDPdata;
+    else if (this.metric == "le")
+        this.displayData2 = this.countryLEdata;
+    else 
+        this.displayData2 = this.countryIMdata;
+    // console.log(this.displayData2);
 
     return this.displayData;
 

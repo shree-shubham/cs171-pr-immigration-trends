@@ -124,3 +124,9 @@ html, body{
   stroke: #ffffff;
   stroke-width: 1;
 }
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
