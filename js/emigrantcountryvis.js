@@ -235,7 +235,6 @@ EmigrantCountryVis.prototype.updateVis = function(){
 
     // redraw metric line
     this.svg.select(".line").remove();
-    this.svg.selectAll(".dot").remove();
     var metricline = d3.svg.line()
         .x(function(d) { return x0(d.year)+30; })
         .y(function(d) { return y2(d.value); })
@@ -244,9 +243,12 @@ EmigrantCountryVis.prototype.updateVis = function(){
         .attr("class", "line")
         .attr("d", metricline(this.displayData2));
 
+    // redraw dot markers
+    this.svg.selectAll(".dot").remove();
     this.svg.selectAll("dot")
         .data(this.displayData2)
     .enter().append("circle")
+        .attr("class", "dot")
         .attr("r", 5)
         .attr("fill", "red")
         .attr("cx", function(d) { return x0(d.year)+30; })

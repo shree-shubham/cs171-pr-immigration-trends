@@ -397,6 +397,8 @@
 			$(eventHandler1).bind("metricChanged", function(event, metric){
 				emigrant_country_vis_1.onMetricChange(metric);
 				immigrant_country_vis_1.onMetricChange(metric);
+				emigrant_country_vis_2.onMetricChange(metric);
+				immigrant_country_vis_2.onMetricChange(metric);
 			})
 			$(eventHandler2).bind("metricChanged", function(event, metric){
 				emigrant_country_vis_1.onMetricChange(metric);
