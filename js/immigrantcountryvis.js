@@ -16,7 +16,7 @@ ImmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortality
     this.displayData2 = []; // for the metric
 
     // defines constants
-    this.margin = {top: 25, right: 25, bottom: 50, left: 40},
+    this.margin = {top: 25, right: 50, bottom: 50, left: 40},
     this.width = 450 - this.margin.left - this.margin.right,
     this.height = 250 - this.margin.top - this.margin.bottom;
 
@@ -46,8 +46,21 @@ ImmigrantCountryVis.prototype.initVis = function(){
         .domain([0, this.ymax])
         .range([this.height, 0]);
 
+    // get max of this.displayData2;
+    function getMaxOfArray(numArray) {
+      return Math.max.apply(null, numArray);
+    }
+
+    var notNullArray = [];
+    this.displayData2.forEach(function(d){
+        if (d.value != null && !isNaN(d.value)) {
+            notNullArray.push(d.value);
+        }
+    })
+    var max2 = getMaxOfArray(notNullArray);
+    
     var y2 = d3.scale.linear()
-        .domain([0, d3.max(this.displayData2, function(d) { return d3.max(d.years, function(d) { return d.value; }); })])
+        .domain([0, max2])
         .range([this.height, 0]);
 
     var color = d3.scale.category10();
@@ -80,7 +93,7 @@ ImmigrantCountryVis.prototype.initVis = function(){
       .call(this.xAxis);
 
     this.svg.append("g")
-          .attr("class", "y axis")
+          .attr("class", "y1 axis")
           .call(this.y1Axis)
         .append("text")
           .attr("transform", "rotate(-90)")
@@ -91,15 +104,15 @@ ImmigrantCountryVis.prototype.initVis = function(){
           .text("immigrants");
 
     this.svg.append("g")
-          .attr("class", "y axis")
+          .attr("class", "y2 axis")
           .attr("transform", "translate(" + this.width + ",0)")
           .call(this.y2Axis)
         .append("text")
+          .attr("y", -50)
+          .attr("x", 100)
           .attr("transform", "rotate(90)")
-          .attr("y", 6)
-          .attr("x", 20)
           .attr("dy", ".71em")
-          .style("text-anchor", "end")
+          .style("text-anchor", "middle")
           .style("fill", "white")
           .text(this.metric);
 }
@@ -143,6 +156,23 @@ ImmigrantCountryVis.prototype.updateVis = function(){
         .domain([0, this.ymax])
         .range([this.height, 0]);
 
+    // get max of this.displayData2;
+    function getMaxOfArray(numArray) {
+      return Math.max.apply(null, numArray);
+    }
+
+    var notNullArray = [];
+    this.displayData2.forEach(function(d){
+        if (d.value != null && !isNaN(d.value)) {
+            notNullArray.push(d.value);
+        }
+    })
+    var max2 = getMaxOfArray(notNullArray);
+    
+    var y2 = d3.scale.linear()
+        .domain([0, max2])
+        .range([this.height, 0]);
+
     var color = d3.scale.category10();
 
     this.xAxis = d3.svg.axis()
@@ -155,15 +185,37 @@ ImmigrantCountryVis.prototype.updateVis = function(){
         .ticks(6)
         .tickFormat(d3.format(".2s"));
 
+    this.y2Axis = d3.svg.axis()
+        .scale(y2)
+        .orient("right")
+        .ticks(6)
+        .tickFormat(d3.format(".2s"));
+
     // update axis
     this.svg.select(".x.axis")
         .call(this.xAxis);
 
-    this.svg.select(".y.axis")
+    this.svg.select(".y1.axis")
         .call(this.y1Axis);
 
     // removes all rectangles
     this.svg.selectAll("rect").remove();
+
+    // redraw y2 axis
+    this.svg.select(".y2.axis").remove();
+
+    this.svg.append("g")
+          .attr("class", "y2 axis")
+          .attr("transform", "translate(" + this.width + ",0)")
+          .call(this.y2Axis)
+        .append("text")
+          .attr("y", -50)
+          .attr("x", 100)
+          .attr("transform", "rotate(90)")
+          .attr("dy", ".71em")
+          .style("text-anchor", "middle")
+          .style("fill", "white")
+          .text(this.metric);
 
     // add rectangles
     var year = this.svg.selectAll(".year")
@@ -180,6 +232,25 @@ ImmigrantCountryVis.prototype.updateVis = function(){
       .attr("y", function(d) { return y1(d.value); })
       .attr("height", function(d) { return that.height - y1(d.value); })
       .style("fill", function(d) { return color(d.name); });
+
+    // redraw metric line
+    this.svg.select(".line").remove();
+    this.svg.select(".dot").remove();
+    var metricline = d3.svg.line()
+        .x(function(d) { return x0(d.year)+30; })
+        .y(function(d) { return y2(d.value); })
+
+    this.svg.append("path")
+        .attr("class", "line")
+        .attr("d", metricline(this.displayData2));
+
+    this.svg.selectAll("dot")
+        .data(this.displayData2)
+    .enter().append("circle")
+        .attr("r", 5)
+        .attr("fill", "red")
+        .attr("cx", function(d) { return x0(d.year)+30; })
+        .attr("cy", function(d) { return y2(d.value); });
 
     // graph legend
     var legend = this.svg.selectAll(".legend")
@@ -455,6 +526,29 @@ ImmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         }
     });
     this.countryGDPdata = this.countryGDPdata[0];
+    var gdpArray = [ 
+        {
+            year: "1960",
+            value: this.countryGDPdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryGDPdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryGDPdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryGDPdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryGDPdata.years["2000"]
+        }
+    ];
+    this.countryGDPdata = gdpArray;
     // console.log("GDP DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryGDPdata);
 
@@ -466,6 +560,29 @@ ImmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         }
     });
     this.countryIMdata = this.countryIMdata[0];
+    var imArray = [ 
+        {
+            year: "1960",
+            value: this.countryIMdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryIMdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryIMdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryIMdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryIMdata.years["2000"]
+        }
+    ];
+    this.countryIMdata = imArray;
     // console.log("INFANT MORTALITY DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryIMdata);
 
@@ -477,6 +594,29 @@ ImmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         }
     });
     this.countryLEdata = this.countryLEdata[0];
+    var leArray = [ 
+        {
+            year: "1960",
+            value: this.countryLEdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryLEdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryLEdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryLEdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryLEdata.years["2000"]
+        }
+    ];
+    this.countryGDPdata = gdpArray;
     // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryLEdata);
 

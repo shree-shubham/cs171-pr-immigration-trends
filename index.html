@@ -71,7 +71,7 @@
 			g_year = 0,
 			g_direction = "outgoing",
 			g_sex = 0;
-			g_metric = "gdp";
+			g_metric = "GDP ($)";
 		var code_lookup = {}, arcs = [];
 		var colors = ["#31f931", "#ffad32", "#47b5ff"];
 		var arcColor = colors[0],
@@ -352,6 +352,7 @@
 					d3.select(this).on("click", function(x){
 						g_metric = d3.select(this).attr("value");
 						$(eventHandler1).trigger("metricChanged", [g_metric]);
+						$(eventHandler2).trigger("metricChanged", [g_metric]);
 					})
 				}	
 			});
@@ -398,6 +399,8 @@
 				immigrant_country_vis_1.onMetricChange(metric);
 			})
 			$(eventHandler2).bind("metricChanged", function(event, metric){
+				emigrant_country_vis_1.onMetricChange(metric);
+				immigrant_country_vis_1.onMetricChange(metric);
 				emigrant_country_vis_2.onMetricChange(metric);
 				immigrant_country_vis_2.onMetricChange(metric);
 			})
