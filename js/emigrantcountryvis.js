@@ -478,7 +478,7 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
             value: this.countryLEdata.years["2000"]
         }
     ];
-    this.countryGDPdata = gdpArray;
+    this.countryLEdata = leArray;
     // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryLEdata);
 
