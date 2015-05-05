@@ -43,7 +43,7 @@
 			
 	    <br><br>
 			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked> Emigration (Outgoing) </label>
-		    <label><input name="direction" class="incoming_button" type="radio" value="ingoing"> Immigration (Ingoing) </label>
+		    <label><input name="direction" class="incoming_button" type="radio" value="incoming"> Immigration (Incoming) </label>
 	 	<br><br>
 	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes</label>
 		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only</label>
@@ -71,7 +71,12 @@
 		<label for="searchbar" >Bad with maps? Search for a country below.</label>
 		<br>
 		<input id="searchbar" type="text" class="form-control" placeholder="Start typing...">
-		<input type="button" value="Go">
+		<input type="button" value="Go" id="go_button">
+	</div>
+
+	<!-- Info Table -->
+	<div class="table" id="table">
+		Hover over a country to reveal data.
 	</div>
 
 	<!-- Bar Graph Divs -->
@@ -331,6 +336,7 @@
 			//make some changes to be compatible with our data set
 			code_lookup['USA'] = "United States";
 			code_lookup['TZA'] = "Tanzania";
+			code_lookup['ALG'] = "Algeria";
 
 		    listener();
 		}
@@ -532,6 +538,37 @@
 			  	idiv.style.left = e.clientX + 'px';
 			}
 
+			// return relevant figures based on selected sex
+			function relevantNums(obj){
+				var output = 0;
+				if("Male" in obj && g_sex != 1) output += obj.Male;
+	    		if("Female" in obj && g_sex != 2) output += obj.Female;
+	    		return output;
+			}
+
+			// Update table function
+			function updateTable(country, list){
+				var tbl = d3.select("#table");
+					tbl.text(null);
+					tbl.append("h3").text(country);
+
+				var count = list.length;
+				var tr = tbl.append("table")
+							.append("tbody")
+							.selectAll("tr")
+							.data(list)
+							.enter()
+								.append("tr")
+								.style("color", function(d,i){return "rgba(1,174,240,"+(1.0-(i/(count+1))).toString()+")"});
+
+
+				var td = tr.selectAll("td")
+							.data(function(d){ return [d.country, relevantNums(d).toLocaleString()] })
+							.enter()
+							.append("td")
+							.text(function(d){ return d; });
+			};
+
 			// Show arcs on map
 			function showArcs(c){
 		    	var ctry = d3.select(this);
@@ -548,12 +585,6 @@
 
 				var sortedDests;
 				
-				function relevantNums(obj){
-					var output = 0;
-					if("Male" in obj && g_sex != 1) output += obj.Male;
-		    		if("Female" in obj && g_sex != 2) output += obj.Female;
-		    		return output;
-				}
 
 				// Sort function - emigration
 				if(g_direction == "outgoing"){
@@ -574,7 +605,9 @@
 			   		};
 			   		sortedDests = sortedDests.slice(0, end);
 
-			    }else if(g_direction == "ingoing"){
+			   		updateTable(code_lookup[orig.country], sortedDests);
+
+			    }else if(g_direction == "incoming"){
 
 			    	var destSortFunc = function(a, b){
 			    		var a = a.years[g_year].dests.filter(function(n){
@@ -615,6 +648,8 @@
 			    		sum += relevantNums(sortedDests[end].years[g_year].dests.filter(function(n){ return n.country == reconcile(code); })[0]);
 			    		end += 1;
 			    	}
+
+			    	updateTable(code_lookup[reconcile(code)], sortedDests);
 			    	sortedDests = sortedDests.slice(0, end);
 
 			    }
@@ -648,7 +683,7 @@
 										longitude: dest.longitude
 									}
 								})
-							}else if(g_direction == "ingoing"){
+							}else if(g_direction == "incoming"){
 								arcs.push({
 									origin: {
 										latitude: dest.latitude,
@@ -668,7 +703,7 @@
 		    	map.arc(arcs, {
 					strokeColor: arcColor,
 					strokeWidth: 1,
-					arcSharpness: 1,
+					arcSharpness: 0.5,
 				});
 		    
 			}
@@ -680,7 +715,7 @@
 		    	map.arc([], {
 					strokeColor: arcColor,
 					strokeWidth: 1,
-					arcSharpness: 1,
+					arcSharpness: 0,
 				});
 		    }
 
@@ -721,6 +756,25 @@
 				name: 'countries',
 				source: substringMatcher(countries)
 			});
+
+			function getCode(country){
+				for(var code in code_lookup){
+					if (code_lookup[code] == country)
+						return code;
+				}
+			};
+
+			// Go Button onpress
+			d3.select("#go_button").on("click", function(b){
+				var country = $('#searchbar').val();
+				d3.selectAll(".datamaps-subunit").each(function(c){
+					if(d3.select(this).attr("class").split(" ")[1] == getCode(country)){
+						console.log(d3.select(this));
+						showArcs(d3.select(this));
+					}
+				});
+			});
+
 		}
 
 

@@ -5,6 +5,8 @@ html, body{
     height:100%;
     width:100%;
     background-color:#000;
+    overflow-y:hidden;
+    overflow-x:hidden;
 }
 
 #container{
@@ -17,7 +19,7 @@ html, body{
 	font-size: 75%;
     padding:20px;
 	position: absolute;
-    right:20px;
+    right:70px;
     top:20px;
     z-index:999;
     color:#fff;
@@ -38,8 +40,9 @@ html, body{
 .search{
     position: absolute;
     left: 20px;
-    bottom: 100px;
+    bottom: 150px;
     color: #fff;
+    z-index:5000;
 }
 
 .search input.form-control{
@@ -73,6 +76,20 @@ html, body{
 
 .search input[type="button"]:focus{
     background-color: rgba(71,181,255,1);
+}
+
+.table{
+    position: absolute;
+    bottom: 100px;
+    right: 70px;
+    background-color: rgba(0,0,0,0.7);
+    color: #fff;
+    padding: 7px 10px;
+}
+
+.table h3{
+    text-align:center;
+    color:#FF358B;
 }
 
 #emigrantCountryVis1{
