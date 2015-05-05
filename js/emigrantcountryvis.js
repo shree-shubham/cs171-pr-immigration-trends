@@ -1,12 +1,22 @@
-EmigrantCountryVis = function(_parentElement, _data, _eventHandler){
+EmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortalitydata, _lifeexpectancydata, _metric, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
+    this.countrycode = "";
     this.countryname = "";
+    this.gdpdata = _gdpdata;
+    this.infantmortalitydata = _infantmortalitydata;
+    this.lifeexpectancydata = _lifeexpectancydata;
+    this.metric = _metric;
     this.eventHandler = _eventHandler;
-    this.displayData = [];
+    this.countryGDPdata = [];
+    this.countryIMdata = [];
+    this.countryLEdata = [];
+
+    this.displayData = []; // for the immigration/emigration data
+    this.displayData2 = []; // for the metric
 
     // defines constants
-    this.margin = {top: 25, right: 25, bottom: 50, left: 40},
+    this.margin = {top: 25, right: 50, bottom: 50, left: 40},
     this.width = 450 - this.margin.left - this.margin.right,
     this.height = 250 - this.margin.top - this.margin.bottom;
 
@@ -31,9 +41,26 @@ EmigrantCountryVis.prototype.initVis = function(){
         .domain(gender_names)
         .rangeRoundBands([0, x0.rangeBand()]);
 
-    var y = d3.scale.linear()
+    var y1 = d3.scale.linear()
         // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .domain([0, this.ymax])
+        .range([this.height, 0]);
+
+    // get max of this.displayData2;
+    function getMaxOfArray(numArray) {
+      return Math.max.apply(null, numArray);
+    }
+
+    var notNullArray = [];
+    this.displayData2.forEach(function(d){
+        if (d.value != null && !isNaN(d.value)) {
+            notNullArray.push(d.value);
+        }
+    })
+    var max2 = getMaxOfArray(notNullArray);
+    
+    var y2 = d3.scale.linear()
+        .domain([0, max2])
         .range([this.height, 0]);
 
     var color = d3.scale.category10();
@@ -42,9 +69,14 @@ EmigrantCountryVis.prototype.initVis = function(){
         .scale(x0)
         .orient("bottom");
 
-    this.yAxis = d3.svg.axis()
-        .scale(y)
+    this.y1Axis = d3.svg.axis()
+        .scale(y1)
         .orient("left")
+        .tickFormat(d3.format(".2s"));
+
+    this.y2Axis = d3.svg.axis()
+        .scale(y2)
+        .orient("right")
         .tickFormat(d3.format(".2s"));
 
     // construct SVG layout
@@ -61,15 +93,28 @@ EmigrantCountryVis.prototype.initVis = function(){
       .call(this.xAxis);
 
     this.svg.append("g")
-      .attr("class", "y axis")
-      .call(this.yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .style("fill", "white")
-      .text("emigrants");
+          .attr("class", "y1 axis")
+          .call(this.y1Axis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .style("fill", "white")
+          .text("emigrants");
+
+    this.svg.append("g")
+          .attr("class", "y2 axis")
+          .attr("transform", "translate(" + this.width + ",0)")
+          .call(this.y2Axis)
+        .append("text")
+          .attr("transform", "rotate(90)")
+          .attr("y", -50)
+          .attr("x", 100)
+          .attr("dy", ".71em")
+          .style("text-anchor", "middle")
+          .style("fill", "white")
+          .text(this.metric);
 }
 
 /**
@@ -106,9 +151,26 @@ EmigrantCountryVis.prototype.updateVis = function(){
         .domain(gender_names)
         .rangeRoundBands([0, x0.rangeBand()]);
 
-    var y = d3.scale.linear()
+    var y1 = d3.scale.linear()
         // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
         .domain([0, this.ymax])
+        .range([this.height, 0]);
+
+    // get max of this.displayData2;
+    function getMaxOfArray(numArray) {
+      return Math.max.apply(null, numArray);
+    }
+
+    var notNullArray = [];
+    this.displayData2.forEach(function(d){
+        if (d.value != null && !isNaN(d.value)) {
+            notNullArray.push(d.value);
+        }
+    })
+    var max2 = getMaxOfArray(notNullArray);
+    
+    var y2 = d3.scale.linear()
+        .domain([0, max2])
         .range([this.height, 0]);
 
     var color = d3.scale.category10();
@@ -117,9 +179,15 @@ EmigrantCountryVis.prototype.updateVis = function(){
         .scale(x0)
         .orient("bottom");
 
-    this.yAxis = d3.svg.axis()
-        .scale(y)
+    this.y1Axis = d3.svg.axis()
+        .scale(y1)
         .orient("left")
+        .ticks(6)
+        .tickFormat(d3.format(".2s"));
+
+    this.y2Axis = d3.svg.axis()
+        .scale(y2)
+        .orient("right")
         .ticks(6)
         .tickFormat(d3.format(".2s"));
 
@@ -127,11 +195,27 @@ EmigrantCountryVis.prototype.updateVis = function(){
     this.svg.select(".x.axis")
         .call(this.xAxis);
 
-    this.svg.select(".y.axis")
-        .call(this.yAxis);
+    this.svg.select(".y1.axis")
+        .call(this.y1Axis);
 
     // removes all rectangles
     this.svg.selectAll("rect").remove();
+
+    // redraw y2 axis
+    this.svg.select(".y2.axis").remove();
+
+    this.svg.append("g")
+          .attr("class", "y2 axis")
+          .attr("transform", "translate(" + this.width + ",0)")
+          .call(this.y2Axis)
+        .append("text")
+          .attr("y", -50)
+          .attr("x", 100)
+          .attr("transform", "rotate(90)")
+          .attr("dy", ".71em")
+          .style("text-anchor", "middle")
+          .style("fill", "white")
+          .text(this.metric);
 
     // add rectangles
     var year = this.svg.selectAll(".year")
@@ -145,9 +229,30 @@ EmigrantCountryVis.prototype.updateVis = function(){
     .enter().append("rect")
       .attr("width", x1.rangeBand()-2)
       .attr("x", function(d) { return x1(d.name); })
-      .attr("y", function(d) { return y(d.value); })
-      .attr("height", function(d) { return that.height - y(d.value); })
+      .attr("y", function(d) { return y1(d.value); })
+      .attr("height", function(d) { return that.height - y1(d.value); })
       .style("fill", function(d) { return color(d.name); });
+
+    // redraw metric line
+    this.svg.select(".line").remove();
+    var metricline = d3.svg.line()
+        .x(function(d) { return x0(d.year)+30; })
+        .y(function(d) { return y2(d.value); })
+
+    this.svg.append("path")
+        .attr("class", "line")
+        .attr("d", metricline(this.displayData2));
+
+    // redraw dot markers
+    this.svg.selectAll(".dot").remove();
+    this.svg.selectAll("dot")
+        .data(this.displayData2)
+    .enter().append("circle")
+        .attr("class", "dot")
+        .attr("r", 5)
+        .attr("fill", "red")
+        .attr("cx", function(d) { return x0(d.year)+30; })
+        .attr("cy", function(d) { return y2(d.value); });
 
     // graph legend
     var legend = this.svg.selectAll(".legend")
@@ -189,15 +294,29 @@ EmigrantCountryVis.prototype.updateVis = function(){
  * be defined here.
  * @param selection
  */
-EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname, ymax){
+EmigrantCountryVis.prototype.onSelectionChange = function (code, cdata, cname, ymax){
 
-    // console.log("Country is now " + cname + ":");
+    // console.log("Country is now " + cname + " with code: " + code);
     // console.log(cdata);
 
     this.countryname = cname;
     this.data = cdata;
     this.ymax = ymax;
+    this.countrycode = code;
 
+    this.wrangleData(null);
+    this.updateVis();
+}
+
+/**
+ * Gets called by event handler and should update metric
+ * @param selection
+ */
+EmigrantCountryVis.prototype.onMetricChange = function (metric){
+
+    // console.log("Metric is now " + metric);
+
+    this.metric = metric;
     this.wrangleData(null);
     this.updateVis();
 }
@@ -208,7 +327,6 @@ EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname, ymax){
  * @returns {Array|*}
  */
 EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
-
 
     // Set filter to a function that accepts all items
     // ONLY if the parameter _filter is NOT null use this parameter
@@ -221,7 +339,7 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
 
     var that = this;
 
-    // TODO: filter data
+    // build emigration data
     this.displayData = [];
     var country = this.data.country;
     var latitude = this.data.latitude;
@@ -261,6 +379,116 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
         that.displayData.push(yeardata);
     });
     // console.log(this.displayData);
+
+    // update country GDP data to contain only GDP data for the country
+    this.countryGDPdata = [];
+    this.gdpdata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryGDPdata.push(d);
+        }
+    });
+    this.countryGDPdata = this.countryGDPdata[0];
+    var gdpArray = [ 
+        {
+            year: "1960",
+            value: this.countryGDPdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryGDPdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryGDPdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryGDPdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryGDPdata.years["2000"]
+        }
+    ];
+    this.countryGDPdata = gdpArray;
+    // console.log("GDP DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryGDPdata);
+
+    // update country infant mortality data to contain only infant mortality data for the country
+    this.countryIMdata = [];
+    this.infantmortalitydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryIMdata.push(d);
+        }
+    });
+    this.countryIMdata = this.countryIMdata[0];
+    var imArray = [ 
+        {
+            year: "1960",
+            value: this.countryIMdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryIMdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryIMdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryIMdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryIMdata.years["2000"]
+        }
+    ];
+    this.countryIMdata = imArray;
+    // console.log("INFANT MORTALITY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryIMdata);
+
+    // update country life expectancy data to contain only life expectancy data for the country
+    this.countryLEdata = [];
+    this.lifeexpectancydata.forEach(function(d){
+        if (d.country == that.countrycode) {
+            that.countryLEdata.push(d);
+        }
+    });
+    this.countryLEdata = this.countryLEdata[0];
+    var leArray = [ 
+        {
+            year: "1960",
+            value: this.countryLEdata.years["1960"]
+        },
+        {
+            year: "1970",
+            value: this.countryLEdata.years["1970"]
+        },
+        {
+            year: "1980",
+            value: this.countryLEdata.years["1980"]
+        },
+        {
+            year: "1990",
+            value: this.countryLEdata.years["1990"]
+        },
+        {
+            year: "2000",
+            value: this.countryLEdata.years["2000"]
+        }
+    ];
+    this.countryLEdata = leArray;
+    // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
+    // console.log(this.countryLEdata);
+
+    if (this.metric == "GDP ($)")
+        this.displayData2 = this.countryGDPdata;
+    else if (this.metric == "Life Expectancy (years)")
+        this.displayData2 = this.countryLEdata;
+    else 
+        this.displayData2 = this.countryIMdata;
+    // console.log(this.displayData2);
 
     return this.displayData;
 
