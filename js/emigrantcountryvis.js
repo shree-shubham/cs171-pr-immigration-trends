@@ -45,7 +45,8 @@ EmigrantCountryVis.prototype.initVis = function(){
         .rangeRoundBands([0, x0.rangeBand()]);
 
     var y = d3.scale.linear()
-        .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
+        // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
+        .domain([0, this.ymax])
         .range([this.height, 0]);
 
     var color = d3.scale.category10();
@@ -119,7 +120,8 @@ EmigrantCountryVis.prototype.updateVis = function(){
         .rangeRoundBands([0, x0.rangeBand()]);
 
     var y = d3.scale.linear()
-        .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
+        // .domain([0, d3.max(this.displayData, function(d) { return d3.max(d.genders, function(d) { return d.value; }); })])
+        .domain([0, this.ymax])
         .range([this.height, 0]);
 
     var color = d3.scale.category10();
@@ -200,13 +202,14 @@ EmigrantCountryVis.prototype.updateVis = function(){
  * be defined here.
  * @param selection
  */
-EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname){
+EmigrantCountryVis.prototype.onSelectionChange = function (cdata, cname, ymax){
 
     // console.log("Country is now " + cname + ":");
     // console.log(cdata);
 
     this.countryname = cname;
     this.data = cdata;
+    this.ymax = ymax;
 
     this.wrangleData(null);
     this.updateVis();
@@ -275,3 +278,17 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
     return this.displayData;
 
 }
+
+// returns the maximum y-value of this dataset for the purpose of regulating y-axis scales
+EmigrantCountryVis.prototype.getMaxY = function(){
+    return d3.max(this.displayData, function(d) { 
+        return d3.max(d.genders, function(d) { 
+            return d.value; 
+        }); 
+    });
+}
+
+
+
+
+

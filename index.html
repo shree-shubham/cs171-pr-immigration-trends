@@ -29,12 +29,12 @@
 	    <b>Year:</b> 1960
 	        <input class = "slider" type="range" name="points" min="1960" max="2000" step="10" value="1960" id="slider-time" oninput=";"> 2000
 	    <br><br>
-			<label><input class="direction" type="radio" value="outgoing" checked>Outgoing (Emigrants)</label>
-		    <label><input class="direction" type="radio" value="incoming"> Incoming (Immigrants)</label>
+			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked>Outgoing (Emigrants)</label>
+		    <label><input name="direction" class="incoming_button" type="radio" value="incoming"> Incoming (Immigrants)</label>
 	 	<br><br>
-	  		<label><input class="both_button" type="radio" value="both" checked>Both Sexes</label>
-		    <label><input class="female_button" type="radio" value="female">Females Only</label>
-		    <label><input class="male_button" type="radio" value="male" >Males Only</label>
+	  		<label><input name="gender" class="both_button" type="radio" value="both" checked>Both Sexes</label>
+		    <label><input name="gender" class="female_button" type="radio" value="female">Females Only</label>
+		    <label><input name="gender" class="male_button" type="radio" value="male" >Males Only</label>
 		<br><br>
 		Click once on a country to examine migration numbers in more detail.  
 		<br>
@@ -51,7 +51,7 @@
 
 	<script>
 		var g_data, gdp_data, infant_mortality_data, life_expectancy_data,
-			g_year = 1970,
+			g_year = 1960,
 			g_direction = "outgoing",
 			g_sex = "both";
 		var code_lookup = {}, arcs = [];
@@ -294,13 +294,39 @@
 			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, eventHandler2);
 			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, eventHandler2);
 			
-			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname){
-				emigrant_country_vis_1.onSelectionChange(countrydata, countryname);
-				immigrant_country_vis_1.onSelectionChange(code, countryname);
+			// gets the maximum y value of the two countries being analyzed for purposes of standardizing the y-axis across
+			function getMaxY1(){
+				var c1_imax = immigrant_country_vis_1.getMaxY();
+				var c1_emax = emigrant_country_vis_1.getMaxY();
+				if (c1_emax != null || c1_emax != null)
+					return Math.max(c1_imax, c1_emax);
+				else 
+					return 10000000;
+			}
+			function getMaxY2(){
+				var c2_imax = immigrant_country_vis_2.getMaxY();
+				var c2_emax = emigrant_country_vis_2.getMaxY();
+				if (c2_emax != null || c2_emax != null)
+					return Math.max(c2_imax, c2_emax);
+				else 
+					return 10000000;
+			}
+
+			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
+				emigrant_country_vis_1.onSelectionChange(countrydata, countryname, ymax);
+				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
+				// recalculate ymax
+				ymax = getMaxY1();
+				emigrant_country_vis_1.onSelectionChange(countrydata, countryname, ymax);
+				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
 			})
-			$(eventHandler2).bind("selectionChanged", function(event, countrydata, code, countryname){
-				emigrant_country_vis_2.onSelectionChange(countrydata, countryname);
-				immigrant_country_vis_2.onSelectionChange(code, countryname);
+			$(eventHandler2).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
+				emigrant_country_vis_2.onSelectionChange(countrydata, countryname, ymax);
+				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
+				// recalculate ymax
+				ymax = getMaxY2();
+				emigrant_country_vis_2.onSelectionChange(countrydata, countryname, ymax);
+				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
 			})
 			
 			var DELAY = 200, clicks = 0, timer = null;
@@ -315,9 +341,12 @@
 							return n.country == code;
 						});
 						var countryname = code_lookup[code];
+
+						// temporarily set ymax
+						var ymax = 30000000;
+						$(eventHandler1).trigger("selectionChanged", [countrydata[0], code, countryname, ymax]);
 						$("#emigrantCountryVis1").show();
 						$("#immigrantCountryVis1").show();
-						$(eventHandler1).trigger("selectionChanged", [countrydata[0], code, countryname]);
 						clicks = 0;
 					}, DELAY);
 				} else {
@@ -328,11 +357,14 @@
 						return n.country == code;
 					});
 					var countryname = code_lookup[code];
+
+					// temporarily set ymax
+					var ymax = 30000000;
+					$(eventHandler2).trigger("selectionChanged", [countrydata[0], code, countryname, ymax]);
 					$("#emigrantCountryVis1").show();
 					$("#immigrantCountryVis1").show();
 					$("#emigrantCountryVis2").show();
 					$("#immigrantCountryVis2").show();
-					$(eventHandler2).trigger("selectionChanged", [countrydata[0], code, countryname]);
 					clicks = 0;
 				}
 			});
@@ -409,9 +441,6 @@
 		    	ctry.style("fill", "#FF358B");
 		    
 		    	var arcs = [];
-
-
-
 		    	var orig = g_data.filter(function(n){
 					return n.country == code;
 				});
@@ -430,7 +459,7 @@
 		    		return d3.descending(compa, compb);
 		    	}
 
-		    	var sortedDests = orig.years[0].dests.sort(destSortFunc);
+		    	var sortedDests = orig.years[1].dests.sort(destSortFunc);
 
 		    	sortedDests = sortedDests.slice(0,10);
 		    	// console.log(sortedDests);
