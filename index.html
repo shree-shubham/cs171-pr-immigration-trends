@@ -12,6 +12,7 @@
 
 	<!--add own vis classes-->
 	<script src = "js/emigrantcountryvis.js"></script>
+	<script src = "js/immigrantcountryvis.js"></script>
 
 	<!--add own stylesheets-->
 	<link rel="stylesheet" href="/css/style.css" type="text/css">
@@ -34,11 +35,19 @@
 	  		<label><input class="both_button" type="radio" value="both" checked>Both Sexes</label>
 		    <label><input class="female_button" type="radio" value="female">Females Only</label>
 		    <label><input class="male_button" type="radio" value="male" >Males Only</label>
+		<br><br>
+		Click once on a country to examine migration numbers in more detail.  
+		<br>
+		Double-click on another country to bring up side-by-side comparison.  
+		<br>
+		Click outside of the graphs to start over.  Graphs are also draggable!
 	</div>
 	
 	<div id="container"></div>
 	<div id="emigrantCountryVis1" style="display:none"></div>
 	<div id="emigrantCountryVis2" style="display:none"></div>
+	<div id="immigrantCountryVis1" style="display:none"></div>
+	<div id="immigrantCountryVis2" style="display:none"></div>
 
 	<script>
 		var g_data, 
@@ -189,13 +198,17 @@
 			var eventHandler1 = new Object();
 			var eventHandler2 = new Object();
 			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, eventHandler1);
+			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, eventHandler1);
 			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, eventHandler2);
+			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, eventHandler2);
 			
-			$(eventHandler1).bind("selectionChanged", function(event, countrydata, countryname){
+			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname){
 				emigrant_country_vis_1.onSelectionChange(countrydata, countryname);
+				immigrant_country_vis_1.onSelectionChange(code, countryname);
 			})
-			$(eventHandler2).bind("selectionChanged", function(event, countrydata, countryname){
+			$(eventHandler2).bind("selectionChanged", function(event, countrydata, code, countryname){
 				emigrant_country_vis_2.onSelectionChange(countrydata, countryname);
+				immigrant_country_vis_2.onSelectionChange(code, countryname);
 			})
 			
 			var DELAY = 200, clicks = 0, timer = null;
@@ -211,7 +224,8 @@
 						});
 						var countryname = code_lookup[code];
 						$("#emigrantCountryVis1").show();
-						$(eventHandler1).trigger("selectionChanged", [countrydata[0], countryname]);
+						$("#immigrantCountryVis1").show();
+						$(eventHandler1).trigger("selectionChanged", [countrydata[0], code, countryname]);
 						clicks = 0;
 					}, DELAY);
 				} else {
@@ -223,8 +237,10 @@
 					});
 					var countryname = code_lookup[code];
 					$("#emigrantCountryVis1").show();
+					$("#immigrantCountryVis1").show();
 					$("#emigrantCountryVis2").show();
-					$(eventHandler2).trigger("selectionChanged", [countrydata[0], countryname]);
+					$("#immigrantCountryVis2").show();
+					$(eventHandler2).trigger("selectionChanged", [countrydata[0], code, countryname]);
 					clicks = 0;
 				}
 			});
@@ -233,17 +249,27 @@
 			$(document).mouseup(function(e){
 				var emigrantCountryVis1Div = $("#emigrantCountryVis1");
 				var emigrantCountryVis2Div = $("#emigrantCountryVis2");
+				var immigrantCountryVis1Div = $("#immigrantCountryVis1");
+				var immigrantCountryVis2Div = $("#immigrantCountryVis2");
 				if(!emigrantCountryVis1Div.is(e.target) && 
 					emigrantCountryVis1Div.has(e.target).length === 0 &&
 					!emigrantCountryVis2Div.is(e.target) && 
-					emigrantCountryVis2Div.has(e.target).length === 0) {
-					emigrantCountryVis1Div.hide();
-					emigrantCountryVis2Div.hide();
-				}
+					emigrantCountryVis2Div.has(e.target).length === 0 &&
+					!immigrantCountryVis1Div.is(e.target) && 
+					immigrantCountryVis1Div.has(e.target).length === 0 &&
+					!immigrantCountryVis2Div.is(e.target) && 
+					immigrantCountryVis2Div.has(e.target).length === 0) 
+					{
+						emigrantCountryVis1Div.hide();
+						immigrantCountryVis1Div.hide();
+						emigrantCountryVis2Div.hide();
+						immigrantCountryVis2Div.hide();
+					}
 			});
 
-			// makes emigrantCountryVis1 draggable
+			// makes emigrantCountryVis1 and immigrantCountryVis1 draggable
 			document.getElementById('emigrantCountryVis1').addEventListener('mousedown', mouseDown1, false);
+			document.getElementById('immigrantCountryVis1').addEventListener('mousedown', mouseDown1, false);
 			window.addEventListener('mouseup', mouseUp1, false);		
 			function mouseUp1(){
 			    window.removeEventListener('mousemove', divMove1, true);
@@ -252,14 +278,19 @@
 			  window.addEventListener('mousemove', divMove1, true);
 			}
 			function divMove1(e){
-			    var div = document.getElementById('emigrantCountryVis1');
-			  	div.style.position = 'absolute';
-			  	div.style.top = e.clientY + 'px';
-			  	div.style.left = e.clientX + 'px';
+			    var ediv = document.getElementById('emigrantCountryVis1');
+			    var idiv = document.getElementById('immigrantCountryVis1');
+			  	ediv.style.position = 'absolute';
+			  	ediv.style.top = e.clientY + 'px';
+			  	ediv.style.left = e.clientX + 'px';
+			  	idiv.style.position = 'absolute';
+			  	idiv.style.top = (e.clientY+300) + 'px';
+			  	idiv.style.left = e.clientX + 'px';
 			}
 
-			// makes emigrantCountryVis2 draggable
+			// makes emigrantCountryVis2 and immigrantCountryVis2 draggable
 			document.getElementById('emigrantCountryVis2').addEventListener('mousedown', mouseDown2, false);
+			document.getElementById('immigrantCountryVis2').addEventListener('mousedown', mouseDown2, false);
 			window.addEventListener('mouseup', mouseUp2, false);		
 			function mouseUp2(){
 			    window.removeEventListener('mousemove', divMove2, true);
@@ -268,10 +299,14 @@
 			  window.addEventListener('mousemove', divMove2, true);
 			}
 			function divMove2(e){
-			    var div = document.getElementById('emigrantCountryVis2');
-			  	div.style.position = 'absolute';
-			  	div.style.top = e.clientY + 'px';
-			  	div.style.left = e.clientX + 'px';
+			    var ediv = document.getElementById('emigrantCountryVis2');
+			    var idiv = document.getElementById('immigrantCountryVis2');
+			  	ediv.style.position = 'absolute';
+			  	ediv.style.top = e.clientY + 'px';
+			  	ediv.style.left = e.clientX + 'px';
+			  	idiv.style.position = 'absolute';
+			  	idiv.style.top = (e.clientY+300) + 'px';
+			  	idiv.style.left = e.clientX + 'px';
 			}
 
 			// bloom arcs on mouseover

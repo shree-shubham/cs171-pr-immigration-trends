@@ -36,11 +36,11 @@ html, body{
 }
 
 #emigrantCountryVis1{
-position: fixed;
-    top: 50%;
-    right: 50%;
-    left: 25%;
-    bottom: 50%;
+    position: fixed;
+    top: 30%;
+    right: 70%;
+    left: 30%;
+    bottom: 70%;
     width: 450px; 
     height: 250px;
     font-size: 75%;
@@ -56,11 +56,51 @@ position: fixed;
 }
 
 #emigrantCountryVis2{
-position: fixed;
-    top: 50%;
-    right: 50%;
-    left: 75%;
-    bottom: 50%;
+    position: fixed;
+    top: 30%;
+    right: 30%;
+    left: 70%;
+    bottom: 70%;
+    width: 450px; 
+    height: 250px;
+    font-size: 75%;
+    background-color: rgba(0,0,0,0.7);
+    padding:10px;
+    z-index:999;
+    color:#ffffff;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #ffffff;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#immigrantCountryVis1{
+    position: fixed;
+    top: 70%;
+    right: 70%;
+    left: 30%;
+    bottom: 30%;
+    width: 450px; 
+    height: 250px;
+    font-size: 75%;
+    background-color: rgba(0,0,0,0.7);
+    padding:10px;
+    z-index:999;
+    color:#ffffff;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #ffffff;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+#immigrantCountryVis2{
+    position: fixed;
+    top: 70%;
+    right: 30%;
+    left: 70%;
+    bottom: 30%;
     width: 450px; 
     height: 250px;
     font-size: 75%;
