@@ -235,7 +235,7 @@ EmigrantCountryVis.prototype.updateVis = function(){
 
     // redraw metric line
     this.svg.select(".line").remove();
-    this.svg.select(".dot").remove();
+    this.svg.selectAll(".dot").remove();
     var metricline = d3.svg.line()
         .x(function(d) { return x0(d.year)+30; })
         .y(function(d) { return y2(d.value); })
