@@ -46,6 +46,11 @@
 	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes</label>
 		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only</label>
 		    <label><input name="sex" class="female_button" type="radio" value="2">Males Only</label>
+		<br><br>
+			Comparison metric:
+			<label><input name="metric" class="gdp_button" type="radio" value="gdp" checked>GDP</label>
+		    <label><input name="metric" class="im_button" type="radio" value="im">Infant Mortality</label>
+		    <label><input name="metric" class="le_button" type="radio" value="le">Life Expectancy</label>
 		    
 		<br><br>
 		Click once on a country to examine migration numbers in more detail.  
@@ -66,6 +71,7 @@
 			g_year = 0,
 			g_direction = "outgoing",
 			g_sex = 0;
+			g_metric = "gdp";
 		var code_lookup = {}, arcs = [];
 		var colors = ["#31f931", "#ffad32", "#47b5ff"];
 		var arcColor = colors[0],
@@ -332,7 +338,12 @@
 						d3.select('#curyr').text(year);
 						g_year = (year - 1960) / 10;
 					})
-				}
+				// On changing the comparison metric
+				}else if (d3.select(this).attr("name") == "metric"){
+					d3.select(this).on("click", function(x){
+						g_metric = d3.select(this).attr("value");
+					})
+				}	
 			});
 
 			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
