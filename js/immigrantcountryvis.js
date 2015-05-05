@@ -1,4 +1,4 @@
-ImmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortalitydata, _lifeexpectancydata, _eventHandler){
+ImmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortalitydata, _lifeexpectancydata, _metric, _eventHandler){
     this.parentElement = _parentElement;
     this.data = _data;
     this.countrycode = "";
@@ -6,11 +6,14 @@ ImmigrantCountryVis = function(_parentElement, _data, _gdpdata, _infantmortality
     this.gdpdata = _gdpdata;
     this.infantmortalitydata = _infantmortalitydata;
     this.lifeexpectancydata = _lifeexpectancydata;
+    this.metric = _metric;
     this.eventHandler = _eventHandler;
-    this.displayData = [];
     this.countryGDPdata = [];
     this.countryIMdata = [];
     this.countryLEdata = [];
+
+    this.displayData = []; // for the immigration/emigration data
+    this.displayData2 = []; // for the metric
 
     // defines constants
     this.margin = {top: 25, right: 25, bottom: 50, left: 40},
@@ -204,6 +207,19 @@ ImmigrantCountryVis.prototype.onSelectionChange = function (code, cname, ymax){
     this.countryname = cname;
     this.ymax = ymax;
 
+    this.wrangleData(null);
+    this.updateVis();
+}
+
+/**
+ * Gets called by event handler and should update metric
+ * @param selection
+ */
+ImmigrantCountryVis.prototype.onMetricChange = function (metric){
+
+    // console.log("Metric is now " + metric);
+
+    this.metric = metric;
     this.wrangleData(null);
     this.updateVis();
 }

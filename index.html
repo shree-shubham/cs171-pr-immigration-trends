@@ -319,6 +319,15 @@
 
 			});
 
+			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
+			var eventHandler1 = new Object();
+			var eventHandler2 = new Object();
+			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler1);
+			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler1);
+			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
+			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
+			
+			// legend listeners
 			d3.selectAll('input').each(function(d){
 				// On changing direction of visualization (immigration/emigration)
 				if(d3.select(this).attr("name") == "direction"){
@@ -342,18 +351,11 @@
 				}else if (d3.select(this).attr("name") == "metric"){
 					d3.select(this).on("click", function(x){
 						g_metric = d3.select(this).attr("value");
+						$(eventHandler1).trigger("metricChanged", [g_metric]);
 					})
 				}	
 			});
 
-			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
-			var eventHandler1 = new Object();
-			var eventHandler2 = new Object();
-			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler1);
-			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler1);
-			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler2);
-			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, eventHandler2);
-			
 			// gets the maximum y value of the two countries being analyzed for purposes of standardizing the y-axis across
 			function getMaxY1(){
 				var c1_imax = immigrant_country_vis_1.getMaxY();
@@ -372,6 +374,7 @@
 					return 10000000;
 			}
 
+			// what to do if user selects a new pair of countries
 			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
 				emigrant_country_vis_1.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
@@ -387,6 +390,16 @@
 				ymax = getMaxY2();
 				emigrant_country_vis_2.onSelectionChange(code, countrydata, countryname, ymax);
 				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
+			})
+
+			// what to do if user selects new metric
+			$(eventHandler1).bind("metricChanged", function(event, metric){
+				emigrant_country_vis_1.onMetricChange(metric);
+				immigrant_country_vis_1.onMetricChange(metric);
+			})
+			$(eventHandler2).bind("metricChanged", function(event, metric){
+				emigrant_country_vis_2.onMetricChange(metric);
+				immigrant_country_vis_2.onMetricChange(metric);
 			})
 			
 			var DELAY = 200, clicks = 0, timer = null;
@@ -525,7 +538,7 @@
 			    	sortedDests = orig.years[g_year].dests.sort(destSortFunc);
 
 			    	sortedDests = sortedDests.slice(0,10);
-			    	console.log(sortedDests);
+			    	// console.log(sortedDests);
 			    }else if(g_direction == "ingoing"){
 			    	var destSortFunc = function(a, b){
 			    		var a = a.years[g_year].dests.filter(function(n){
