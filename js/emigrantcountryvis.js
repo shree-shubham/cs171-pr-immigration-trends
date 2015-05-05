@@ -46,6 +46,10 @@ EmigrantCountryVis.prototype.initVis = function(){
         .domain([0, this.ymax])
         .range([this.height, 0]);
 
+    var y2 = d3.scale.linear()
+        .domain([0, d3.max(this.displayData2, function(d) { return d3.max(d.years, function(d) { return d.value; }); })])
+        .range([this.height, 0]);
+
     var color = d3.scale.category10();
 
     this.xAxis = d3.svg.axis()
@@ -55,6 +59,11 @@ EmigrantCountryVis.prototype.initVis = function(){
     this.y1Axis = d3.svg.axis()
         .scale(y1)
         .orient("left")
+        .tickFormat(d3.format(".2s"));
+
+    this.y2Axis = d3.svg.axis()
+        .scale(y2)
+        .orient("right")
         .tickFormat(d3.format(".2s"));
 
     // construct SVG layout
@@ -71,15 +80,28 @@ EmigrantCountryVis.prototype.initVis = function(){
       .call(this.xAxis);
 
     this.svg.append("g")
-      .attr("class", "y axis")
-      .call(this.y1Axis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .style("fill", "white")
-      .text("emigrants");
+          .attr("class", "y axis")
+          .call(this.y1Axis)
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .style("fill", "white")
+          .text("emigrants");
+
+    this.svg.append("g")
+          .attr("class", "y axis")
+          .attr("transform", "translate(" + this.width + ",0)")
+          .call(this.y2Axis)
+        .append("text")
+          .attr("transform", "rotate(90)")
+          .attr("y", 6)
+          .attr("x", 20)
+          .attr("dy", ".71em")
+          .style("text-anchor", "end")
+          .style("fill", "white")
+          .text(this.metric);
 }
 
 /**
@@ -137,7 +159,7 @@ EmigrantCountryVis.prototype.updateVis = function(){
     this.svg.select(".x.axis")
         .call(this.xAxis);
 
-    this.svg.select(".y1.axis")
+    this.svg.select(".y.axis")
         .call(this.y1Axis);
 
     // removes all rectangles
@@ -318,9 +340,9 @@ EmigrantCountryVis.prototype.filterAndAggregate = function(_filter){
     // console.log("LIFE EXPECTANCY DATA FOR COUNTRY " + this.countryname);
     // console.log(this.countryLEdata);
 
-    if (this.metric == "gdp")
+    if (this.metric == "GDP ($)")
         this.displayData2 = this.countryGDPdata;
-    else if (this.metric == "le")
+    else if (this.metric == "Life Expectancy (years)")
         this.displayData2 = this.countryLEdata;
     else 
         this.displayData2 = this.countryIMdata;
