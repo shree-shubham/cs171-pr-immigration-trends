@@ -35,6 +35,46 @@ html, body{
     margin:0px;
 }
 
+.search{
+    position: absolute;
+    left: 20px;
+    bottom: 100px;
+    color: #fff;
+}
+
+.search input.form-control{
+    padding: 7px 9px;
+    font-size: 15px;
+    margin: 5px 0px;
+    border:none;
+    -webkit-border-radius:5px;
+    -moz-border-radius:5px;
+    border-radius:5px;
+    background-color:rgba(255,255,255,0.5);
+}
+
+.search input:focus{
+    background-color: #fff;
+}
+
+.search input[type="button"]{
+    padding: 7px 9px;
+    background-color: rgba(71,181,255,0.5);
+    color:#fff;
+    font-size: 15px;
+    position:relative;
+    top: 11px;
+    border:none;
+    -webkit-border-radius:5px;
+    -moz-border-radius:5px;
+    border-radius:5px;
+    cursor: pointer;
+}
+
+.search input[type="button"]:focus{
+    background-color: rgba(71,181,255,1);
+}
+
 #emigrantCountryVis1{
     position: fixed;
     top: 30%;

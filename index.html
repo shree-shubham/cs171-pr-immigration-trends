@@ -7,14 +7,16 @@
 	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
 	<script src="/libs/datamaps/datamaps.world.min.js"></script>
 	<script src="http://d3js.org/queue.v1.min.js"></script>
-	<script src="libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
-    <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+	<script src="/libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
+    <script src="/libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+    <script src="/libs/typeahead.js/typeahead.bundle.min.js" charset="utf-8"></script>
 
 	<!--add own vis classes-->
 	<script src = "js/emigrantcountryvis.js"></script>
 	<script src = "js/immigrantcountryvis.js"></script>
 
 	<!--add own stylesheets-->
+	<!-- <link rel="stylesheet" href="/libs/bootstrap/css/bootstrap.min.css" type="text/css"> -->
 	<link rel="stylesheet" href="/css/style.css" type="text/css">
 
 	<span class="hdrs">
@@ -55,28 +57,47 @@
 		Click outside of the graphs to start over.  Graphs are also draggable!
 	</div>
 	
+	<!-- Map Container Div -->
 	<div id="container"></div>
+	
+	<!-- Search Bar Div -->
+	<div class="search" id="search">
+		<label for="searchbar" >Bad with maps? Search for a country below.</label>
+		<br>
+		<input id="searchbar" type="text" class="form-control" placeholder="Start typing...">
+		<input type="button" value="Go">
+	</div>
+
+	<!-- Bar Graph Divs -->
 	<div id="emigrantCountryVis1" style="display:none"></div>
 	<div id="emigrantCountryVis2" style="display:none"></div>
 	<div id="immigrantCountryVis1" style="display:none"></div>
 	<div id="immigrantCountryVis2" style="display:none"></div>
 
 	<script>
+		// Global Variables
 		var g_data, gdp_data, infant_mortality_data, life_expectancy_data,
 			g_year = 0,
 			g_direction = "outgoing",
 			g_sex = 0;
-		var code_lookup = {}, arcs = [];
-		var colors = ["#31f931", "#ffad32", "#47b5ff"];
-		var arcColor = colors[0],
+		
+		var code_lookup = {}, 
+			arcs = [];
+		
+		var colors = ["#31f931", "#ffad32", "#47b5ff"], 
+			countries,
+			arcColor = colors[0],
 			unknown = ["GZA", "SCG", "UNK"]; // certain country codes have become obsolete due to international political reasons
+		
 		var map;
 
-		function reconcile(code){ // reconcile differences between country codes across datasets from separate sources
+		// reconcile differences between country codes across datasets from separate sources
+		function reconcile(code){ 
 			if(code == "AGO") return "ANG";
 			if(code == "BWA") return "BOT";
 			if(code == "DZA") return "ALG";
 			if(code == "BLZ") return "BIZ";
+			if(code == "CHL") return "CHI";
 			return code;
 		}
 
@@ -92,7 +113,6 @@
 			y = w.innerHeight|| e.clientHeight|| g.clientHeight;
 
 			d3.select('#container').style({ "width": x.toString()+"px", "height": y.toString()+"px"});
-			// d3.select('#container').select('svg').attr("width", x).attr("height", y);
 		}
 
 		window.onresize = updateWindow;
@@ -105,6 +125,7 @@
 			rendermap();
 		}
 
+		// Process the raw data
 		function processData(error, data, latlongs, gdps, infantmortalities, lifeexpectancies) {
 			g_data = [];
 			gdp_data = [];
@@ -115,6 +136,8 @@
 				return ((-1 == unknown.indexOf(n.Orig)) && (-1 == unknown.indexOf(n.Destination)));
 			};
 			data = data.filter(filterFunc);
+
+			countries = latlongs["data"].map(function(x){ return x[8]; });
 
 			data.forEach(function(obj) {
 				if(obj.Gender != "Total"){
@@ -482,9 +505,8 @@
 			  	idiv.style.left = e.clientX + 'px';
 			}
 
-			// bloom arcs on mouseover
-			d3.selectAll(".datamaps-subunit").on("mouseover", function(c){
-
+			// Show arcs on map
+			function showArcs(c){
 		    	var ctry = d3.select(this);
 		    	var code = ctry.attr("class").split(' ')[1];
 		    	ctry.style("fill", "#FF358B");
@@ -621,7 +643,11 @@
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
-		    }).on("mouseout", function(c){
+		    
+			}
+
+			// Hide arcs on map
+			function hideArcs(c){
 		    	d3.selectAll(".datamaps-subunit")
 		    		.style("fill", "rgba(255,255,255,0.5)");
 		    	map.arc([], {
@@ -629,18 +655,45 @@
 					strokeWidth: 1,
 					arcSharpness: 1,
 				});
-		    });
+		    }
 
+			// bloom arcs on mouseover
+			d3.selectAll(".datamaps-subunit")
+				.on("mouseover", showArcs)
+				.on("mouseout", hideArcs);
 
-			d3.selectAll("select")
-				.each(function(d){
-					if(d3.select(this).attr("name") == 'year'){
-						d3.select(this).on("change", function(){
-							year = d3.select(this).property("value");
-							newyear();
-						});
-					}
-				});
+		    // Search Bar Autocomplete -- Using Typeahead.js Library
+			var substringMatcher = function(strs) {
+				return function findMatches(q, cb) {
+					var matches, substringRegex;
+
+					// an array that will be populated with substring matches
+					matches = [];
+
+					// regex used to determine if a string contains the substring `q`
+					substrRegex = new RegExp(q, 'i');
+
+					// iterate through the pool of strings and for any string that
+					// contains the substring `q`, add it to the `matches` array
+					$.each(strs, function(i, str) {
+						if (substrRegex.test(str)) {
+						matches.push(str);
+						}
+					});
+
+					cb(matches);
+				};
+			};
+
+			$('#searchbar').typeahead({
+				hint: true,
+				highlight: true,
+				minLength: 1
+			},
+			{
+				name: 'countries',
+				source: substringMatcher(countries)
+			});
 		}
 
 
