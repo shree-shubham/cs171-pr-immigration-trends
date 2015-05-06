@@ -19,8 +19,19 @@ html, body{
 	font-size: 75%;
     padding:20px;
 	position: absolute;
-    right:70px;
+    right:60px;
     top:20px;
+    z-index:999;
+    color:#fff;
+}
+
+#comp{
+    background-color: rgba(0,0,0,0.7);
+    font-size: 75%;
+    padding:5px;
+    position: absolute;
+    right:60px;
+    top:220px;
     z-index:999;
     color:#fff;
 }
