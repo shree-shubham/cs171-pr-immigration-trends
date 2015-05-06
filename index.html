@@ -48,12 +48,6 @@
 	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes</label>
 		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only</label>
 		    <label><input name="sex" class="female_button" type="radio" value="2">Males Only</label>
-		<br><br>
-			Comparison metric:
-			<label><input name="metric" class="gdp_button" type="radio" value="GDP ($)" checked>GDP</label>
-		    <label><input name="metric" class="im_button" type="radio" value="Infant Mortality (per 1000 born)">Infant Mortality</label>
-		    <label><input name="metric" class="le_button" type="radio" value="Life Expectancy (years)">Life Expectancy</label>
-
 		    
 		<br><br>
 		Click once on a country to examine migration numbers in more detail.  
@@ -61,6 +55,14 @@
 		Double-click on another country to bring up side-by-side comparison.  
 		<br>
 		Click outside of the graphs to start over.  Graphs are also draggable!
+	</div>
+	
+	<!-- Comparison Metric Div -->
+	<div id = "comp" style="display:none">
+		Comparison metric:
+		<label><input name="metric" class="gdp_button" type="radio" value="GDP ($)" checked>GDP</label>
+	    <label><input name="metric" class="im_button" type="radio" value="Infant Mortality (per 1000 born)">Infant Mortality</label>
+	    <label><input name="metric" class="le_button" type="radio" value="Life Expectancy (years)">Life Expectancy</label>
 	</div>
 	
 	<!-- Map Container Div -->
@@ -446,6 +448,7 @@
 						$(eventHandler1).trigger("selectionChanged", [countrydata[0], code, countryname, ymax]);
 						$("#emigrantCountryVis1").show();
 						$("#immigrantCountryVis1").show();
+						$("#comp").show();
 						clicks = 0;
 					}, DELAY);
 				} else {
@@ -464,6 +467,7 @@
 					$("#immigrantCountryVis1").show();
 					$("#emigrantCountryVis2").show();
 					$("#immigrantCountryVis2").show();
+					$("#comp").show();
 					clicks = 0;
 				}
 			});
