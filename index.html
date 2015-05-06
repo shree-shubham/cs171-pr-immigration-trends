@@ -105,12 +105,6 @@
 
 		// reconcile differences between country codes across datasets from separate sources
 		function reconcile(code){ 
-			if(code == "AGO") return "ANG";
-			if(code == "BWA") return "BOT";
-			if(code == "DZA") return "ALG";
-			if(code == "BLZ") return "BIZ";
-			if(code == "CHL") return "CHI";
-			if(code == "BWA") return "BOT";
 			return code;
 		}
 
@@ -444,7 +438,7 @@
 						var countrydata = g_data.filter(function(n){
 							return n.country == reconcile(code);
 						});
-						var countryname = code_lookup[code];
+						var countryname = code_lookup[reconcile(code)];
 
 						// temporarily set ymax
 						var ymax = 30000000;
@@ -460,7 +454,7 @@
 					var countrydata = g_data.filter(function(n){
 						return n.country == reconcile(code);
 					});
-					var countryname = code_lookup[code];
+					var countryname = code_lookup[reconcile(code)];
 
 					// temporarily set ymax
 					var ymax = 30000000;

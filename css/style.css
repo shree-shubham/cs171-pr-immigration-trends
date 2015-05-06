@@ -42,6 +42,11 @@ html, body{
     left: 20px;
     bottom: 150px;
     color: #fff;
+    font-size: 12px;
+}
+
+.search input{
+    font-size:12px;
 }
 
 .search input.form-control{
@@ -65,7 +70,7 @@ html, body{
     color:#fff;
     font-size: 15px;
     position:relative;
-    top: 11px;
+    top: 15px;
     border:none;
     -webkit-border-radius:5px;
     -moz-border-radius:5px;
