@@ -14,4 +14,4 @@ Directory description:
 
 *Project Website:* http://sierrakatow.github.io/cs171-pr-immigration-trends/
 
-*Screencast Video:*
+*Screencast Video:* https://www.youtube.com/watch?v=odeSSJTLrAU&feature=youtu.be
