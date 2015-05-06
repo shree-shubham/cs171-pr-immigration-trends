@@ -314,11 +314,13 @@ EmigrantCountryVis.prototype.onSelectionChange = function (code, cdata, cname, y
  */
 EmigrantCountryVis.prototype.onMetricChange = function (metric){
 
-    // console.log("Metric is now " + metric);
+    // console.log("EmigrantVis: Metric is now " + metric);
 
     this.metric = metric;
-    this.wrangleData(null);
-    this.updateVis();
+    if (this.data != null){
+        this.wrangleData(null);
+        this.updateVis();
+    }
 }
 
 /**
