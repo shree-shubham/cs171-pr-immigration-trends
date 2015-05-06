@@ -330,13 +330,13 @@
 
 		   	var countries = Datamap.prototype.worldTopo.objects.world.geometries;
 			for (var i = 0, j = countries.length; i < j; i++) {
-				code_lookup[countries[i].id] = countries[i].properties.name;
+				code_lookup[reconcile(countries[i].id)] = countries[i].properties.name;
 			}
 
 			//make some changes to be compatible with our data set
 			code_lookup['USA'] = "United States";
 			code_lookup['TZA'] = "Tanzania";
-			code_lookup['ALG'] = "Algeria";
+			// code_lookup['ALG'] = "Algeria";
 
 		    listener();
 		}
@@ -549,7 +549,7 @@
 			// Update table function
 			function updateTable(country, list){
 				var tbl = d3.select("#table");
-					tbl.text(null);
+					tbl.html("Displaying Top 75% of Migrants<br>");
 					tbl.append("h3").text(country);
 
 				var count = list.length;
