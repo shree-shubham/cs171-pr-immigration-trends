@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+
+	<!--Libraries-->
+	<script src="libs/d3/d3.min.js" charset="utf-8"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/topojson/1.6.9/topojson.min.js"></script>
+	<script src="libs/datamaps/datamaps.world.min.js"></script>
+	<script src="http://d3js.org/queue.v1.min.js"></script>
+	<script src="libs/jquery/jquery-2.1.1.min.js" charset="utf-8"></script>
+    <script src="libs/bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
+    <script src="libs/typeahead.js/typeahead.bundle.min.js" charset="utf-8"></script>
+
+	<!--add own vis classes-->
+	<script src = "js/emigrantcountryvis.js"></script>
+	<script src = "js/immigrantcountryvis.js"></script>
+
+	<!--add own stylesheets-->
+	<!-- <link rel="stylesheet" href="/libs/bootstrap/css/bootstrap.min.css" type="text/css"> -->
+	<link rel="stylesheet" href="css/style.css" type="text/css">
+
+	<span class="hdrs">
+		<h1>Immigration Trends</h1>
+	</span>
+	<br>
+
+</head>
+<body>
+	
+	<div id="legend">	
+	    <b>Year:</b> &nbsp;
+	    	<span style="background:#fff;color:#000;padding:2px 4px;" id="curyr">1960</span>
+	    	&nbsp;
+	    	1960
+	        <input class="slider" type="range" name="year" min="1960" max="2000" step="10" value="1960" id="slider-time" list="years" oninput=";"> 2000
+			<datalist id="years">
+				<option>1960</option>
+				<option>1970</option>
+				<option>1980</option>
+				<option>1990</option>
+				<option>2000</option>
+			</datalist>
+			
+	    <br><br>
+			<label><input name="direction" class="outgoing_button" type="radio" value="outgoing" checked> Emigration (Outgoing) </label>
+		    <label><input name="direction" class="incoming_button" type="radio" value="incoming"> Immigration (Incoming) </label>
+	 	<br><br>
+	 		<label><input name="sex" class="both_button" type="radio" value="0" checked>Both Sexes</label>
+		    <label><input name="sex" class="male_button" type="radio" value="1">Females Only</label>
+		    <label><input name="sex" class="female_button" type="radio" value="2">Males Only</label>
+		<br><br>
+			Comparison metric:
+			<label><input name="metric" class="gdp_button" type="radio" value="GDP ($)" checked>GDP</label>
+		    <label><input name="metric" class="im_button" type="radio" value="Infant Mortality (per 1000 born)">Infant Mortality</label>
+		    <label><input name="metric" class="le_button" type="radio" value="Life Expectancy (years)">Life Expectancy</label>
+
+		    
+		<br><br>
+		Click once on a country to examine migration numbers in more detail.  
+		<br>
+		Double-click on another country to bring up side-by-side comparison.  
+		<br>
+		Click outside of the graphs to start over.  Graphs are also draggable!
+	</div>
+	
+	<!-- Map Container Div -->
+	<div id="container"></div>
+	
+	<!-- Search Bar Div -->
+	<div class="search" id="search">
+		<label for="searchbar" >Bad with maps? Search for a country below.</label>
+		<br>
+		<input id="searchbar" type="text" class="form-control" placeholder="Start typing...">
+		<input type="button" value="Go" id="go_button">
+	</div>
+
+	<!-- Info Table -->
+	<div class="table" id="table">
+		Hover over a country to reveal data.
+	</div>
+
+	<!-- Bar Graph Divs -->
+	<div id="emigrantCountryVis1" style="display:none"></div>
+	<div id="emigrantCountryVis2" style="display:none"></div>
+	<div id="immigrantCountryVis1" style="display:none"></div>
+	<div id="immigrantCountryVis2" style="display:none"></div>
+
+	<script>
+		// Global Variables
+		var g_data, gdp_data, infant_mortality_data, life_expectancy_data,
+			g_year = 0,
+			g_direction = "outgoing",
+			g_sex = 0,
+			g_metric = "GDP ($)";
+		var code_lookup = {}, arcs = [];
+		var colors = ["#31f931", "#ffad32", "#47b5ff"],
+			countries = Datamap.prototype.worldTopo.objects.world.geometries.map(function(x) { 
+				if(x.properties.name == "United States of America") return "United States";
+				return x.properties.name 
+			});
+			arcColor = colors[0],
+			unknown = ["GZA", "SCG", "UNK"]; // certain country codes have become obsolete due to international political reasons
+		
+		var map;
+
+		// reconcile differences between country codes across datasets from separate sources
+		function reconcile(code){ 
+			// has become obsolete
+			return code;
+		}
+
+		var w = window,
+			d = document,
+			e = d.documentElement,
+			g = d.getElementsByTagName('body')[0],
+			x = w.innerWidth || e.clientWidth || g.clientWidth,
+			y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+		function updateWindow(){
+			x = w.innerWidth || e.clientWidth || g.clientWidth;
+			y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+			d3.select('#container').style({ "width": x.toString()+"px", "height": y.toString()+"px"});
+		}
+
+		window.onresize = updateWindow;
+		updateWindow();
+
+		function newyear(){
+			g_data.forEach(function(i){
+				partners[i.country_id] = i.years[year-1995].top_partners.map(function(d){ return d.country_id }); // create partners lookup
+			});
+			rendermap();
+		}
+
+		// Process the raw data
+		function processData(error, data, latlongs, gdps, infantmortalities, lifeexpectancies) {
+			g_data = [];
+			gdp_data = [];
+			infant_mortality_data = [];
+			life_expectancy_data = [];
+			var years = ["1960", "1970", "1980", "1990", "2000"];
+			var filterFunc = function(n){
+				return ((-1 == unknown.indexOf(n.Orig)) && (-1 == unknown.indexOf(n.Destination)));
+			};
+			data = data.filter(filterFunc);
+
+			data.forEach(function(obj) {
+				if(obj.Gender != "Total"){
+
+					var lastIndex = g_data.length - 1; 
+
+					if(lastIndex >= 0 && g_data[lastIndex].country == obj.Origin){
+						var current = g_data[lastIndex];
+						current.years.forEach(function(yearObj){
+
+							var lastDest = yearObj.dests.length - 1;
+							if (lastDest >= 0 && yearObj.dests[lastDest].country == obj.Destination) { // dest exists, add to country
+
+								yearObj.dests[lastDest][obj.Gender] = parseInt(obj[yearObj.year]);
+
+							} else { // dest doesn't exist
+								
+								var newDest = {country: obj.Destination};
+								newDest[obj.Gender] = parseInt(obj[yearObj.year]);
+								yearObj.dests.push(newDest);
+
+							}
+						})
+
+					}else{
+						var thisCountry = latlongs["data"].filter(function(x){
+							return x[10] == obj.Origin;
+						});
+
+
+						if(thisCountry.length > 0){
+							thisCountry = thisCountry[0];
+						}
+
+						var yearsArr = years.map(function(yr){
+							return {
+								year: yr,
+								dests: []
+							}
+						})
+
+						var newCountry = {
+							country: obj.Origin,
+							latitude: parseInt(thisCountry[12]),
+							longitude: parseInt(thisCountry[13]),
+							years: yearsArr
+						}
+
+						g_data.push(newCountry);
+					}
+				}
+			});
+
+			// process GDP data
+			gdps.forEach(function(d){
+				var gdp1960, gdp1970, gdp1980, gdp1990, gdp2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					gdp1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					gdp1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					gdp1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					gdp1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					gdp2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": gdp1960,
+						"1970": gdp1970,
+						"1980": gdp1980,
+						"1990": gdp1990,
+						"2000": gdp2000
+					}
+				}
+				gdp_data.push(newCountry);
+			});
+
+			// process infant mortality data
+			infantmortalities.forEach(function(d){
+				var im1960, im1970, im1980, im1990, im2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					im1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					im1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					im1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					im1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					im2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": im1960,
+						"1970": im1970,
+						"1980": im1980,
+						"1990": im1990,
+						"2000": im2000
+					}
+				}
+				infant_mortality_data.push(newCountry);
+			});
+
+			// process life expectancy data
+			lifeexpectancies.forEach(function(d){
+				var le1960, le1970, le1980, le1990, le2000;
+				var yearsArr = [];
+
+				if (!isNaN(d["1960"]))
+					le1960 = d["1960"];
+				if (!isNaN(d["1970"]))
+					le1970 = d["1970"];
+				if (!isNaN(d["1980"]))
+					le1980 = d["1980"];
+				if (!isNaN(d["1990"]))
+					le1990 = d["1980"];
+				if (!isNaN(d["2000"]))
+					le2000 = d["2000"];
+				
+				var newCountry = {
+					country: d.Country,
+					years: {
+						"1960": le1960,
+						"1970": le1970,
+						"1980": le1980,
+						"1990": le1990,
+						"2000": le2000
+					}
+				}
+				life_expectancy_data.push(newCountry);
+			});
+
+		   	drawMap();
+		   	rendermap();
+	    }
+
+		function dataLoad() {
+			queue()
+				.defer(d3.csv, "data/data_codes.csv")
+				.defer(d3.json, "data/countries_latlong.json")
+				.defer(d3.csv, "data/gdp_data.csv")
+				.defer(d3.csv, "data/infant_mortality_data.csv")
+				.defer(d3.csv, "data/life_expectancy_data.csv")
+				.await(processData);
+		}
+		
+		dataLoad();
+
+		function id_lookup(name){
+			var x = g_data.filter(function(m){
+				return m.name == name;
+			})
+
+			if(x.length == 0) return -1;
+			else return x[0].country_id;
+		};
+
+		function drawMap(){
+			map = new Datamap({
+		    	scope: 'world',
+		    	projection: 'mercator',
+		    	element: document.getElementById('container'),
+		    	fills: {
+		    		defaultFill: 'rgba(255,255,255,0.4)'
+		    	},
+		    	geographyConfig:{
+		    		borderColor: '#000000',
+		    	}
+		   	});
+		}
+
+		function rendermap(){
+
+		   	var countries = Datamap.prototype.worldTopo.objects.world.geometries;
+			for (var i = 0, j = countries.length; i < j; i++) {
+				code_lookup[reconcile(countries[i].id)] = countries[i].properties.name;
+			}
+
+			//make some changes to be compatible with our data set
+			code_lookup['USA'] = "United States";
+			code_lookup['TZA'] = "Tanzania";
+			// code_lookup['ALG'] = "Algeria";
+
+		    listener();
+		}
+
+		function listener(){
+
+			// displays emigrantCountryVis1 div on country click, and the emigrantCountryVis2 on double country click
+			var eventHandler1 = new Object();
+			var eventHandler2 = new Object();
+			var emigrant_country_vis_1 = new EmigrantCountryVis(d3.select("#emigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler1);
+			var immigrant_country_vis_1 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis1"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler1);
+			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
+			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
+			
+			// legend input/button listeners
+			d3.selectAll('input').each(function(d){
+				// On changing direction of visualization (immigration/emigration)
+				if(d3.select(this).attr("name") == "direction"){
+					d3.select(this).on("click", function(x){
+						g_direction = d3.select(this).attr("value");
+					})
+				// On changing sex (both/females only/males only)
+				}else if(d3.select(this).attr("name") == "sex"){
+					d3.select(this).on("click", function(x){
+						g_sex = parseInt(d3.select(this).attr("value"));
+						arcColor = colors[g_sex];
+					})
+				// On changing the year
+				}else if(d3.select(this).attr("name") == "year"){
+					d3.select(this).on("input", function(x, y){
+						year = +this.value; // get value from slider
+						d3.select('#curyr').text(year);
+						g_year = (year - 1960) / 10;
+					})
+				// On changing the comparison metric
+				}else if (d3.select(this).attr("name") == "metric"){
+					d3.select(this).on("click", function(x){
+						g_metric = d3.select(this).attr("value");
+						$(eventHandler1).trigger("metricChanged", [g_metric]);
+						$(eventHandler2).trigger("metricChanged", [g_metric]);
+					})
+				}	
+			});
+
+			// gets the maximum y value of the two countries being analyzed for purposes of standardizing the y-axis across
+			function getMaxY1(){
+				var c1_imax = immigrant_country_vis_1.getMaxY();
+				var c1_emax = emigrant_country_vis_1.getMaxY();
+				if (c1_emax != null || c1_emax != null)
+					return Math.max(c1_imax, c1_emax);
+				else 
+					return 10000000;
+			}
+			function getMaxY2(){
+				var c2_imax = immigrant_country_vis_2.getMaxY();
+				var c2_emax = emigrant_country_vis_2.getMaxY();
+				if (c2_emax != null || c2_emax != null)
+					return Math.max(c2_imax, c2_emax);
+				else 
+					return 10000000;
+			}
+
+			// what to do if user selects a new pair of countries
+			$(eventHandler1).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
+				emigrant_country_vis_1.onSelectionChange(code, countrydata, countryname, ymax);
+				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
+				// recalculate ymax
+				ymax = getMaxY1();
+				emigrant_country_vis_1.onSelectionChange(code, countrydata, countryname, ymax);
+				immigrant_country_vis_1.onSelectionChange(code, countryname, ymax);
+			})
+			$(eventHandler2).bind("selectionChanged", function(event, countrydata, code, countryname, ymax){
+				emigrant_country_vis_2.onSelectionChange(code, countrydata, countryname, ymax);
+				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
+				// recalculate ymax
+				ymax = getMaxY2();
+				emigrant_country_vis_2.onSelectionChange(code, countrydata, countryname, ymax);
+				immigrant_country_vis_2.onSelectionChange(code, countryname, ymax);
+			})
+
+			// what to do if user selects new metric
+			$(eventHandler1).bind("metricChanged", function(event, metric){
+				emigrant_country_vis_1.onMetricChange(metric);
+				immigrant_country_vis_1.onMetricChange(metric);
+				emigrant_country_vis_2.onMetricChange(metric);
+				immigrant_country_vis_2.onMetricChange(metric);
+			})
+			$(eventHandler2).bind("metricChanged", function(event, metric){
+				emigrant_country_vis_1.onMetricChange(metric);
+				immigrant_country_vis_1.onMetricChange(metric);
+				emigrant_country_vis_2.onMetricChange(metric);
+				immigrant_country_vis_2.onMetricChange(metric);
+			})
+			
+			var DELAY = 200, clicks = 0, timer = null;
+			d3.selectAll(".datamaps-subunit").on("click", function(c){
+				clicks++;
+				if(clicks === 1) {
+					var that = this;
+					timer = setTimeout(function(){
+						var ctry = d3.select(that);
+						var code = ctry.attr("class").split(' ')[1];
+						var countrydata = g_data.filter(function(n){
+							return n.country == reconcile(code);
+						});
+						var countryname = code_lookup[reconcile(code)];
+
+						// temporarily set ymax
+						var ymax = 30000000;
+						$(eventHandler1).trigger("selectionChanged", [countrydata[0], code, countryname, ymax]);
+						$("#emigrantCountryVis1").show();
+						$("#immigrantCountryVis1").show();
+						clicks = 0;
+					}, DELAY);
+				} else {
+					clearTimeout(timer);
+					var ctry = d3.select(this);
+					var code = ctry.attr("class").split(' ')[1];
+					var countrydata = g_data.filter(function(n){
+						return n.country == reconcile(code);
+					});
+					var countryname = code_lookup[reconcile(code)];
+
+					// temporarily set ymax
+					var ymax = 30000000;
+					$(eventHandler2).trigger("selectionChanged", [countrydata[0], code, countryname, ymax]);
+					$("#emigrantCountryVis1").show();
+					$("#immigrantCountryVis1").show();
+					$("#emigrantCountryVis2").show();
+					$("#immigrantCountryVis2").show();
+					clicks = 0;
+				}
+			});
+
+			// removes emigrantCountryVis1 and emigrantCountryVis2 div if click outside either country
+			$(document).mouseup(function(e){
+				var emigrantCountryVis1Div = $("#emigrantCountryVis1");
+				var emigrantCountryVis2Div = $("#emigrantCountryVis2");
+				var immigrantCountryVis1Div = $("#immigrantCountryVis1");
+				var immigrantCountryVis2Div = $("#immigrantCountryVis2");
+				if(!emigrantCountryVis1Div.is(e.target) && 
+					emigrantCountryVis1Div.has(e.target).length === 0 &&
+					!emigrantCountryVis2Div.is(e.target) && 
+					emigrantCountryVis2Div.has(e.target).length === 0 &&
+					!immigrantCountryVis1Div.is(e.target) && 
+					immigrantCountryVis1Div.has(e.target).length === 0 &&
+					!immigrantCountryVis2Div.is(e.target) && 
+					immigrantCountryVis2Div.has(e.target).length === 0) 
+					{
+						emigrantCountryVis1Div.hide();
+						immigrantCountryVis1Div.hide();
+						emigrantCountryVis2Div.hide();
+						immigrantCountryVis2Div.hide();
+					}
+			});
+
+			// makes emigrantCountryVis1 and immigrantCountryVis1 draggable
+			document.getElementById('emigrantCountryVis1').addEventListener('mousedown', mouseDown1, false);
+			document.getElementById('immigrantCountryVis1').addEventListener('mousedown', mouseDown1, false);
+			window.addEventListener('mouseup', mouseUp1, false);		
+			function mouseUp1(){
+			    window.removeEventListener('mousemove', divMove1, true);
+			}
+			function mouseDown1(e){
+			  window.addEventListener('mousemove', divMove1, true);
+			}
+			function divMove1(e){
+			    var ediv = document.getElementById('emigrantCountryVis1');
+			    var idiv = document.getElementById('immigrantCountryVis1');
+			  	ediv.style.position = 'absolute';
+			  	ediv.style.top = e.clientY + 'px';
+			  	ediv.style.left = e.clientX + 'px';
+			  	idiv.style.position = 'absolute';
+			  	idiv.style.top = (e.clientY+300) + 'px';
+			  	idiv.style.left = e.clientX + 'px';
+			}
+
+			// makes emigrantCountryVis2 and immigrantCountryVis2 draggable
+			document.getElementById('emigrantCountryVis2').addEventListener('mousedown', mouseDown2, false);
+			document.getElementById('immigrantCountryVis2').addEventListener('mousedown', mouseDown2, false);
+			window.addEventListener('mouseup', mouseUp2, false);		
+			function mouseUp2(){
+			    window.removeEventListener('mousemove', divMove2, true);
+			}
+			function mouseDown2(e){
+			  window.addEventListener('mousemove', divMove2, true);
+			}
+			function divMove2(e){
+			    var ediv = document.getElementById('emigrantCountryVis2');
+			    var idiv = document.getElementById('immigrantCountryVis2');
+			  	ediv.style.position = 'absolute';
+			  	ediv.style.top = e.clientY + 'px';
+			  	ediv.style.left = e.clientX + 'px';
+			  	idiv.style.position = 'absolute';
+			  	idiv.style.top = (e.clientY+300) + 'px';
+			  	idiv.style.left = e.clientX + 'px';
+			}
+
+			// return relevant figures based on selected sex
+			function relevantNums(obj){
+				var output = 0;
+				if("Male" in obj && g_sex != 1) output += obj.Male;
+	    		if("Female" in obj && g_sex != 2) output += obj.Female;
+	    		return output;
+			}
+
+			// Update table function
+			function updateTable(country, code, list){
+				var tbl = d3.select("#table");
+					tbl.html("Displaying Top 75% of Migrants<br>");
+					tbl.append("h3").text(country);
+
+				var count = list.length;
+				var tr = tbl.append("table")
+							.append("tbody")
+							.selectAll("tr")
+							.data(list)
+							.enter()
+								.append("tr")
+								.style("color", function(d,i){return "rgba(1,174,240,"+(1.0-(i/(count+1))).toString()+")"});
+
+				function dataFunc(d) {
+					if(g_direction == "incoming"){
+						return [
+							d.country, 
+							relevantNums(d.years[g_year].dests.filter(function(n){
+									return n.country == code;
+							})[0]).toLocaleString()
+						];
+					}else if(g_direction == "outgoing"){
+						return [
+							d.country,
+							relevantNums(d).toLocaleString()
+						];
+					}
+				}
+
+				var td = tr.selectAll("td")
+							.data(dataFunc)
+							.enter()
+							.append("td")
+							.text(function(d){ return d; });
+			};
+
+			// Show arcs on map
+			function showArcs(c){
+		    	var ctry = d3.select(this);
+		    	var code = ctry.attr("class").split(' ')[1];
+		    	ctry.style("fill", "#FF358B");
+		    
+		    	var arcs = [];
+		    	var orig = g_data.filter(function(n){
+					return n.country == reconcile(code);
+				});
+
+				if(orig.length > 0){
+					orig = orig[0];
+
+				var sortedDests;
+				
+
+				// Sort function - emigration
+				if(g_direction == "outgoing"){
+			    	var destSortFunc = function(a, b){
+			    		return d3.descending(relevantNums(a), relevantNums(b));
+			    	}
+
+			    	sortedDests = orig.years[g_year].dests.sort(destSortFunc);
+			    	var total = d3.sum(sortedDests, function(d){
+			    		return relevantNums(d);
+			    	})
+
+			    	var end = 0, sum = 0;
+
+			   		while(sum/total < 0.75){
+			   			sum += relevantNums(sortedDests[end]);
+			   			end += 1;
+			   		};
+			   		sortedDests = sortedDests.slice(0, end);
+
+			   		updateTable(code_lookup[orig.country], reconcile(orig.country), sortedDests);
+
+			    }else if(g_direction == "incoming"){
+
+			    	var destSortFunc = function(a, b){
+			    		var a = a.years[g_year].dests.filter(function(n){
+			    			return n.country == reconcile(code);
+			    		});
+			    		a = a[0];
+			    		var b = b.years[g_year].dests.filter(function(n){
+			    			return n.country == reconcile(code);
+			    		});
+			    		b = b[0];
+
+			    		return d3.descending(relevantNums(a), relevantNums(b));
+			    	};
+
+			    	sortedDests = g_data.filter(function(n){
+			    		var found = false;
+			    		n.years[g_year].dests.forEach(function(d){
+			    			if(d.country == reconcile(code)){
+			    				found = true;
+			    			}
+			    		})
+			    		return found;
+			    	});
+
+			    	sortedDests = sortedDests.sort(destSortFunc);
+
+			    	var total = d3.sum(sortedDests, function(d){
+			    		var d = d.years[g_year].dests.filter(function(n){
+			    			return n.country == reconcile(code);
+			    		});
+			    		d = d[0];
+			    		return relevantNums(d);
+			    	});
+
+			    	var end = 0, sum = 0;
+
+			    	while(sum/total < 0.75){
+			    		console.log(sum/total);
+			    		sum += relevantNums(sortedDests[end].years[g_year].dests.filter(function(n){ return n.country == reconcile(code); })[0]);
+			    		end += 1;
+			    	}
+			    	sortedDests = sortedDests.slice(0, end);
+
+			    	updateTable(code_lookup[reconcile(code)], reconcile(code), sortedDests);
+			    }
+
+				sortedDests.forEach(function(destObj, prank){
+					var dest = g_data.filter(function(n){
+						return n.country == destObj.country;
+					});
+
+					if(dest.length > 0){
+						dest = dest[0];
+
+						d3.selectAll(".datamaps-subunit").each(function(s){
+							var code = d3.select(this).attr("class").split(' ')[1];
+							if(code == dest.country){
+								var opac = 1.0 - prank/(sortedDests.length + 1);
+								// console.log(opac);
+								d3.select(this).style("fill", "rgba(1,176,240,"+opac+")");
+							}
+						});
+
+						if(typeof(orig) !== "undefined" && typeof(dest) !== "undefined"){
+							if(g_direction == "outgoing"){
+								arcs.push({
+									origin: {
+										latitude: orig.latitude,
+										longitude: orig.longitude
+									},
+									destination: {
+										latitude: dest.latitude,
+										longitude: dest.longitude
+									}
+								})
+							}else if(g_direction == "incoming"){
+								arcs.push({
+									origin: {
+										latitude: dest.latitude,
+										longitude: dest.longitude
+									},
+									destination: {
+										latitude: orig.latitude,
+										longitude: orig.longitude
+									}
+								})
+							}
+						}
+					}
+				})
+				}
+
+		    	map.arc(arcs, {
+					strokeColor: arcColor,
+					strokeWidth: 1,
+					arcSharpness: 0.5,
+				});
+		    
+			}
+
+			// Hide arcs on map
+			function hideArcs(c){
+				d3.select(".table").text("Hover over a country to reveal data.");
+		    	d3.selectAll(".datamaps-subunit")
+		    		.style("fill", "rgba(255,255,255,0.5)");
+		    	map.arc([], {
+					strokeColor: arcColor,
+					strokeWidth: 1,
+					arcSharpness: 0,
+				});
+		    }
+
+			// bloom arcs on mouseover
+			d3.selectAll(".datamaps-subunit")
+				.on("mouseover", showArcs)
+				.on("mouseout", hideArcs);
+
+		    // Search Bar Autocomplete -- Using Typeahead.js Library
+			var substringMatcher = function(strs) {
+				return function findMatches(q, cb) {
+					var matches, substringRegex;
+
+					// an array that will be populated with substring matches
+					matches = [];
+
+					// regex used to determine if a string contains the substring `q`
+					substrRegex = new RegExp(q, 'i');
+
+					// iterate through the pool of strings and for any string that
+					// contains the substring `q`, add it to the `matches` array
+					$.each(strs, function(i, str) {
+						if (substrRegex.test(str)) {
+						matches.push(str);
+						}
+					});
+
+					cb(matches);
+				};
+			};
+
+			$('#searchbar').typeahead({
+				hint: true,
+				highlight: true,
+				minLength: 1
+			},
+			{
+				name: 'countries',
+				source: substringMatcher(countries)
+			});
+
+			function getCode(country){
+				for(var code in code_lookup){
+					if (code_lookup[code].toLowerCase() == country.toLowerCase())
+						return code;
+				}
+			};
+
+			// Go Button onpress
+			d3.select("#go_button").on("click", function(b){
+				var country = $('#searchbar').val();
+				d3.selectAll(".datamaps-subunit").each(function(c){
+					if(d3.select(this).attr("class").split(" ")[1] == getCode(country)){
+						var that = this;
+						setTimeout(function(){
+							d3.select(that).style("fill", "#ffc600");
+						}, 200);
+						setTimeout(function(){
+							d3.select(that).style("fill", "rgba(255, 255, 255, 0.5)");
+						}, 400);
+						setTimeout(function(){
+							d3.select(that).style("fill", "#ffc600");
+						}, 600);
+						setTimeout(function(){
+							d3.select(that).style("fill", "rgba(255, 255, 255, 0.5)");
+						}, 800);
+						setTimeout(function(){
+							d3.select(that).style("fill", "#ffc600");
+						}, 1000);
+						setTimeout(function(){
+							d3.select(that).style("fill", "rgba(255, 255, 255, 0.5)");
+						}, 1200);
+					}
+				});
+			});
+
+		}
+
+
+	</script>
+</body>
+</html>
