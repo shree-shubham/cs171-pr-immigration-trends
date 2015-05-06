@@ -110,6 +110,7 @@
 			if(code == "DZA") return "ALG";
 			if(code == "BLZ") return "BIZ";
 			if(code == "CHL") return "CHI";
+			if(code == "BWA") return "BOT";
 			return code;
 		}
 
@@ -352,7 +353,7 @@
 			var emigrant_country_vis_2 = new EmigrantCountryVis(d3.select("#emigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
 			var immigrant_country_vis_2 = new ImmigrantCountryVis(d3.select("#immigrantCountryVis2"), g_data, gdp_data, infant_mortality_data, life_expectancy_data, g_metric, eventHandler2);
 			
-			// legend listeners
+			// legend input/button listeners
 			d3.selectAll('input').each(function(d){
 				// On changing direction of visualization (immigration/emigration)
 				if(d3.select(this).attr("name") == "direction"){
@@ -758,7 +759,7 @@
 
 			function getCode(country){
 				for(var code in code_lookup){
-					if (code_lookup[code] == country)
+					if (code_lookup[code].toLowerCase() == country.toLowerCase())
 						return code;
 				}
 			};

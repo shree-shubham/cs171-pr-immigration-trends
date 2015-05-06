@@ -297,7 +297,6 @@ ImmigrantCountryVis.prototype.updateVis = function(){
 ImmigrantCountryVis.prototype.onSelectionChange = function (code, cname, ymax){
 
     // console.log("Country is now " + cname + " with code: " + code);
-
     this.countrycode = code;
     this.countryname = cname;
     this.ymax = ymax;
